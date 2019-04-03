@@ -27,6 +27,71 @@ var entries = [
             }
         }
 
+    },
+    {
+        url:'/init-banner',
+        method:'GET',
+        handler:(ctx,next)=>{
+            ctx.type = 'application/json';
+            ctx.response.body=[{
+                id:1,
+                name:'banner1',
+                context:'this is banner 1',
+                href:'www.baidu.com',
+            },{
+                id:2,
+                name:'banner2',
+                context:'this is banner 2',
+                href:'www.1000.com',
+            },{
+                id:3,
+                name:'banner3',
+                context:'this is banner 3',
+                href:'www.google.com',
+            },
+            {
+                id:4,
+                name:'banner4',
+                context:'this is banner 4',
+                href:'www.qianmi.com',
+            }]
+        }
+
+    },
+    {
+        url:'/init-news',
+        method:'GET',
+        handler:(ctx,next)=>{
+            ctx.type = 'application/json';
+            ctx.response.body={
+            data: [{
+                    id:1,
+                    name:'news1',
+                    context:'this is news1',
+                    href:'www.baidu.com',
+                },{
+                    id:2,
+                    name:'news2',
+                    context:'this is news2',
+                    href:'www.1000.com',
+                },{
+                    id:3,
+                    name:'news3',
+                    context:'this is news3',
+                    href:'www.google.com',
+                },
+                {
+                    id:4,
+                    name:'news4',
+                    context:'this is news4',
+                    href:'www.qianmi.com',
+                }],
+            total:100,
+            page:1,    
+            pageSize:10    
+            }
+        }
+
     }
 ];
 
