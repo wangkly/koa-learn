@@ -17,6 +17,16 @@ var entries = [
 
     },
     {
+        url:'/savetodo',
+        method:'POST',
+        handler:(ctx,next)=>{
+            let postData=ctx.request.body;
+            console.log('savetodo ** postData',postData);
+            ctx.response.body=postData
+        }
+
+    },
+    {
         url:'/querydata',
         method:'GET',
         handler:(ctx,next)=>{

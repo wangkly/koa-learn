@@ -14,13 +14,28 @@ var app = new Koa();
 
 app.use(bodyParser())
 
-app.use((ctx,next)=>{
-    console.log(`Process ${ctx.request.method} ${ctx.request.url}`)
-    next();
-    ctx.response.set('Access-Control-Allow-Origin','http://localhost:3000');
-    ctx.response.set('Access-Control-Allow-Credentials',true);
-    ctx.response.set('Access-Control-Allow-Methods','GET, POST');
-})
+// app.use((ctx,next)=>{
+//     console.log(`Process ${ctx.request.method} ${ctx.request.url}`)
+//     next();
+//     ctx.response.set('Access-Control-Allow-Origin','http://localhost:3000');
+//     ctx.response.set('Access-Control-Allow-Credentials',true);
+//     ctx.response.set('Access-Control-Allow-Methods','GET, POST,OPTIONS');
+// })
+
+
+
+app.use(async (ctx, next)=> {
+    ctx.set('Access-Control-Allow-Origin', 'http://localhost:3000');
+    ctx.set('Access-Control-Allow-Credentials',true);
+    ctx.set('Access-Control-Allow-Headers', 'Content-Type, Content-Length, Authorization, Accept, X-Requested-With , yourHeaderFeild');
+    ctx.set('Access-Control-Allow-Methods', 'PUT, POST, GET, DELETE, OPTIONS');
+    if (ctx.method == 'OPTIONS') {
+      ctx.body = 200; 
+    } else {
+      await next();
+    }
+  });
+
 
 // app.use((ctx,next)=>{
 //     if(ctx.request.path=='/'){
