@@ -20,8 +20,9 @@ var entries = [
         url:'/savetodo',
         method:'POST',
         handler:(ctx,next)=>{
+            let name = ctx.cookies.get('name')
+            console.log('cookies name **',name)
             let postData=ctx.request.body;
-            console.log('savetodo ** postData',postData);
             ctx.response.body=postData
         }
 

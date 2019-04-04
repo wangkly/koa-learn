@@ -29,8 +29,10 @@ app.use(async (ctx, next)=> {
     ctx.set('Access-Control-Allow-Credentials',true);
     ctx.set('Access-Control-Allow-Headers', 'Content-Type, Content-Length, Authorization, Accept, X-Requested-With , yourHeaderFeild');
     ctx.set('Access-Control-Allow-Methods', 'PUT, POST, GET, DELETE, OPTIONS');
+    ctx.cookies.set('name', 'wangkly');
     if (ctx.method == 'OPTIONS') {
-      ctx.body = 200; 
+      ctx.response.status = 200;
+      // ctx.body =null; 
     } else {
       await next();
     }
