@@ -1,4 +1,15 @@
 var entries = [
+    {
+        url:'/regist',
+        method:'POST',
+        handler:(ctx,next)=>{
+            let postData=ctx.request.body;
+            postData.email='xxxxx'
+            ctx.response.body=postData
+            // ctx.redirect('http://google.com');
+        }
+
+    },
     {   
         url:'/index',
         method:'GET',
@@ -24,6 +35,7 @@ var entries = [
             console.log('cookies name **',name)
             let postData=ctx.request.body;
             ctx.response.body=postData
+            // ctx.redirect('http://google.com');
         }
 
     },
