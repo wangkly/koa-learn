@@ -12,7 +12,8 @@
   "dependencies": {
     "koa": "^2.5.1",
     "koa-bodyparser": "^4.2.1",
-    "koa-router": "^7.4.0"
+    "koa-router": "^7.4.0",
+    "mongodb": "^3.2.3"
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",

@@ -1,13 +1,10 @@
+import { registHandler} from './controllers/login-regist-controller';
+
 var entries = [
     {
         url:'/regist',
         method:'POST',
-        handler:(ctx,next)=>{
-            let postData=ctx.request.body;
-            postData.email='xxxxx'
-            ctx.response.body=postData
-            // ctx.redirect('http://google.com');
-        }
+        handler:registHandler
 
     },
     {   
