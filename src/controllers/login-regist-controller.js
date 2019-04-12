@@ -10,33 +10,19 @@ exports.registHandler = async (ctx,next)=>{
     
     ctx.response.body=postData
 
-    let {err,client} = await MongoClient.connect(mongodurl,{ useNewUrlParser: true })
-    if (err) throw err;
-    
+    let client = await MongoClient.connect(mongodurl,{ useNewUrlParser: true })
     var dbase = client.db("koa");
+    let resp  = await dbase.collection('learn').findOne({'account':email});
+    if(!resp){
+        dbase.collection('learn').insertOne({'account':email,'password':password}).then((err,result)=>{
+            console.log('save ** result',result)
+        });
+    }else{
+        ctx.status = 500,
+        ctx.type = 'application/json; charset=utf-8';
+        ctx.body={status:500,msg:'已存在相同账号'}
+    }
 
-    let resp  = await dbase.collection('learn').findOne({'account':email})
+    client.close();
 
-    console.log('resp **',resp)
-
-    // ,function(err, res) {
-    //     if (err) throw err;
-    //     console.log('查找结果',res);
-    //     client.close();
-    // });
-
-
-    // ,(err,client)=>{
-
-    //     dbase.collection('learn').insertOne({'account':email,'password':password},function(err,res){
-    //         if (err) throw err;
-    //         console.log('保存结果',res);
-    //         client.close();
-    //     })
-
-
-
-
-
-    // })
 }
