@@ -19,6 +19,7 @@ app.use(async (ctx, next)=> {
     ctx.set('Access-Control-Allow-Credentials',true);
     ctx.set('Access-Control-Allow-Headers', 'Content-Type, Content-Length, Authorization, Accept, X-Requested-With , yourHeaderFeild');
     ctx.set('Access-Control-Allow-Methods', 'PUT, POST, GET, DELETE, OPTIONS');
+    ctx.type = 'application/json; charset=utf-8';
     if (ctx.method == 'OPTIONS') {
       ctx.status = 200;
       // ctx.body =null; 

@@ -1,10 +1,22 @@
-import { registHandler} from './controllers/login-regist-controller';
-
+import { registHandler,loginHandler} from './controllers/login-regist-controller';
+import {saveArticle,getArticles} from './controllers/article-controller';
 var entries = [
     {
         url:'/regist',
         method:'POST',
         handler:registHandler
+
+    },
+    {
+        url:'/login',
+        method:'POST',
+        handler:loginHandler
+
+    },
+    {
+        url:'/saveArticle',
+        method:'POST',
+        handler:saveArticle
 
     },
     {   
@@ -81,36 +93,7 @@ var entries = [
     {
         url:'/init-news',
         method:'GET',
-        handler:(ctx,next)=>{
-            ctx.type = 'application/json';
-            ctx.response.body={
-            data: [{
-                    id:1,
-                    name:'news1',
-                    context:'this is news1',
-                    href:'www.baidu.com',
-                },{
-                    id:2,
-                    name:'news2',
-                    context:'this is news2',
-                    href:'www.1000.com',
-                },{
-                    id:3,
-                    name:'news3',
-                    context:'this is news3',
-                    href:'www.google.com',
-                },
-                {
-                    id:4,
-                    name:'news4',
-                    context:'this is news4',
-                    href:'www.qianmi.com',
-                }],
-            total:100,
-            page:1,    
-            pageSize:10    
-            }
-        }
+        handler:getArticles
 
     }
 ];
