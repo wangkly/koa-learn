@@ -1,5 +1,5 @@
 import { registHandler,loginHandler} from './controllers/login-regist-controller';
-import {saveArticle,getArticles} from './controllers/article-controller';
+import {saveArticle,getArticles,getArticleById} from './controllers/article-controller';
 var entries = [
     {
         url:'/regist',
@@ -95,7 +95,13 @@ var entries = [
         method:'GET',
         handler:getArticles
 
-    }
+    },
+
+    {
+        url:'/getArticle',
+        method:'POST',
+        handler:getArticleById
+    },
 ];
 
 module.exports={
