@@ -1,5 +1,6 @@
 import { registHandler,loginHandler} from './controllers/login-regist-controller';
 import {saveArticle,getArticles,getArticleById} from './controllers/article-controller';
+import {uploadFile} from './controllers/file-controller';
 var entries = [
     {
         url:'/regist',
@@ -18,6 +19,11 @@ var entries = [
         method:'POST',
         handler:saveArticle
 
+    },
+    {
+        url:'/upload',
+        method:'POST',
+        handler:uploadFile
     },
     {   
         url:'/index',
