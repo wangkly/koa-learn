@@ -21,13 +21,11 @@ exports.saveArticle = async (ctx,next)=>{
 
     if(!account){
         ctx.body={status:200,success:false,errMsg:'请先登录'}
-        return;
-    }
-    let resp  = await dbase.collection('article').insertOne({title,content,account});
-    if(resp.insertedCount == 1){
-        ctx.body={status:200,success:true,errMsg:''}
-        console.log(resp)
-
+    }else{
+        let resp  = await dbase.collection('article').insertOne({title,content,account});
+        if(resp.insertedCount == 1){
+            ctx.body={status:200,success:true,errMsg:''}
+        }
     }
 
     client.close();
@@ -53,7 +51,6 @@ exports.getArticles = async(ctx,next)=>{
 exports.getArticleById = async (ctx,next)=>{
     let postData = ctx.request.body;
     let {id} = postData;
-    console.log('getArticle ***',id)
     let client  = await MongoClient.connect(mongodurl,{useNewUrlParser: true });
     let dbase = client.db('koa');
     let article = await dbase.collection('article').findOne({'_id':ObjectID(id) });
