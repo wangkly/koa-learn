@@ -3,7 +3,7 @@ var ObjectID = require('mongodb').ObjectID;
 var crypto = require('crypto');
 const {promisify} = require('util');
 var mongodurl = "mongodb://localhost:27017/";
-
+import {decodeSession} from '../util';
 
 var redis = require("redis"),
 redisClient = redis.createClient();
@@ -17,12 +17,13 @@ exports.saveArticle = async (ctx,next)=>{
     let {title,content} = postData;
     let client  = await MongoClient.connect(mongodurl,{useNewUrlParser: true });
     let dbase = client.db('koa');
-    let account = await getAsync(tokenId);
-
-    if(!account){
+    let session = await getAsync(tokenId);
+     session = decodeSession(session)
+    console.log('save-article *** session',session)
+    if(!session.account){
         ctx.body={status:200,success:false,errMsg:'请先登录'}
     }else{
-        let resp  = await dbase.collection('article').insertOne({title,content,account});
+        let resp  = await dbase.collection('article').insertOne({title,content,account:session.account});
         if(resp.insertedCount == 1){
             ctx.body={status:200,success:true,errMsg:''}
         }
