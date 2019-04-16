@@ -5,6 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "babel-node src/index.js",
+    "debug": "babel-node --inspector src/index.js",
+    "compile":"babel src --out-dir .compiled --source-maps --watch",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
