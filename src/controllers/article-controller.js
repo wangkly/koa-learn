@@ -14,16 +14,20 @@ const getAsync = promisify(redisClient.get).bind(redisClient);
 exports.saveArticle = async (ctx,next)=>{
     let tokenId = ctx.cookies.get('tokenId');
     let postData = ctx.request.body;
-    let {title,content} = postData;
+    let {title,content,cover} = postData;
     let client  = await MongoClient.connect(mongodurl,{useNewUrlParser: true });
     let dbase = client.db('koa');
     let session = await getAsync(tokenId);
      session = decodeSession(session)
-    console.log('save-article *** session',session)
     if(!session.account){
         ctx.body={status:200,success:false,errMsg:'请先登录'}
     }else{
-        let resp  = await dbase.collection('article').insertOne({title,content,account:session.account});
+        // let contentObj = JSON.parse(content);
+        // let {blocks,entityMap} = contentObj;
+        // let first = entityMap[0]||{};
+        // let cover = first.data && first.data.url;
+        // console.log(cover)
+        let resp  = await dbase.collection('article').insertOne({title,content,author:session.account,cover,viewed:0,like:0,comment:0});
         if(resp.insertedCount == 1){
             ctx.body={status:200,success:true,errMsg:''}
         }
@@ -38,7 +42,7 @@ exports.saveArticle = async (ctx,next)=>{
 exports.getArticles = async(ctx,next)=>{
     let client  = await MongoClient.connect(mongodurl,{useNewUrlParser: true });
     let dbase = client.db('koa');
-    let articles = await dbase.collection('article').find({}).toArray();
+    let articles = await dbase.collection('article').find({}).project({content:0}).skip(0).limit(100).toArray();
     ctx.body={
         status:200,success:true,errMsg:'',
         data: articles

@@ -1,4 +1,4 @@
-import { registHandler,loginHandler} from './controllers/login-regist-controller';
+import { registHandler,loginHandler,checkIfLogin} from './controllers/login-regist-controller';
 import {saveArticle,getArticles,getArticleById} from './controllers/article-controller';
 import {uploadFile} from './controllers/file-controller';
 var entries = [
@@ -14,6 +14,13 @@ var entries = [
         handler:loginHandler
 
     },
+    {
+        url:'/checkIfLogin',
+        method:'GET',
+        handler:checkIfLogin
+
+    },
+
     {
         url:'/saveArticle',
         method:'POST',

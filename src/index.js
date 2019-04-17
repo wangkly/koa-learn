@@ -9,7 +9,7 @@ var redis = require("redis"),
 redisClient = redis.createClient();
 const getAsync = promisify(redisClient.get).bind(redisClient);
 
-import {encodeSession,decodeSession} from './util';
+import {encodeSession,decodeSession,EXPIRES} from './util';
 
 import {getRoutes} from './routers';
 
@@ -34,23 +34,30 @@ app.use(async (ctx, next)=> {
 
   app.use(koaStatic(__dirname ,'public'))
 
-  // app.use(async(ctx,next)=>{
-  //     let tokenId = ctx.cookies.get('tokenId');
-  //     console.log('index ***tokenId',tokenId);
-  //     if(tokenId){//如果存在，则去redis中捞一下session
-  //       let session = await getAsync(tokenId);
-  //         session = decodeSession(session);
-  //         console.log('index ***session',session);
-  //         //判断session 是否过期逻辑
-  //         if(session.expire > (new Date()).getTime()){//未超时
-  //           //后面只需要从ctx中取session值  
-  //           app.context.session = session;
-  //         }else{
-  //           // app.context.session ={};
-  //         }
-  //     }
-  //    await next();
-  //   })
+  app.use(async(ctx,next)=>{
+      let tokenId = ctx.cookies.get('tokenId');
+      console.log('index ***tokenId',tokenId);
+      if(tokenId){//如果存在，则去redis中捞一下session
+        let session = await getAsync(tokenId);
+          session = decodeSession(session);
+          console.log('index ***session',session);
+          //判断session 是否过期逻辑
+          if(session.expire > (new Date()).getTime()){//未超时
+            //后面只需要从ctx中取session值  
+            // app.context.session = session; 这样不行 待查
+
+            if(session.expire - (new Date()).getTime() <  1 * 60 * 1000){
+                //更新expire 时间
+                session.expire =  (new Date()).getTime()+ EXPIRES;
+                redisClient.set(tokenId,encodeSession(session))
+            }
+
+          }else{
+            // app.context.session ={};
+          }
+      }
+     await next();
+    })
 
   // app.context.session ={'key':'aaa'};
 

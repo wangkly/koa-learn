@@ -1,10 +1,11 @@
 var MongoClient = require('mongodb').MongoClient;
 var mongodurl = "mongodb://localhost:27017/";
-
+const {promisify} = require('util');
 var redis = require("redis"),
     redisClient = redis.createClient();
+const getAsync = promisify(redisClient.get).bind(redisClient);
 
-import {EXPIRES,md5,encodeSession} from '../util';    
+import {EXPIRES,md5,encodeSession,decodeSession} from '../util';    
 
 exports.registHandler = async (ctx,next)=>{
     let postData=ctx.request.body;
@@ -15,7 +16,7 @@ exports.registHandler = async (ctx,next)=>{
     let resp  = await dbase.collection('user').find({'account':email}).toArray();
     
     if(resp && resp.length == 0){
-        await dbase.collection('user').insertOne({'account':email,'password':md5(password)});
+        await dbase.collection('user').insertOne({'account':email,'password':md5(password),headImg:''});
         ctx.body={status:200,success:true,errMsg:''}
         
     }else{
@@ -43,10 +44,11 @@ exports.loginHandler= async (ctx,next)=>{
             let session_id =  (new Date()).getTime() + Math.random();
             let expire = (new Date()).getTime()+ EXPIRES;
             let session = {
+                userId:resp._id,
                 session_id,
                 expire,
                 account,
-                headImg:resp.img
+                headImg:resp.headImg
             };
 
             let tokenId = session_id;
@@ -62,4 +64,23 @@ exports.loginHandler= async (ctx,next)=>{
     client.close();
     next();
 
+}
+
+/**
+ * 检测用户是否登录
+ */
+exports.checkIfLogin = async(ctx,next)=>{
+    let tokenId = ctx.cookies.get('tokenId');
+    if(tokenId){//存在cookie
+        let session = await getAsync(tokenId);
+        session = decodeSession(session)
+        if(session.expire > (new Date()).getTime()){//session未过期
+            ctx.body={status:200,success:true,errMsg:'',data:session}
+        }else{
+            ctx.body={status:200,success:false,errMsg:'登录已过期'}
+        }
+    }else{
+        ctx.body={status:200,success:false,errMsg:'未登录'}
+    }
+    await next();
 }

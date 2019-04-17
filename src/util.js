@@ -14,6 +14,6 @@ exports.encodeSession =(session)=>{
 
 
 exports.decodeSession = (session)=>{
-   let str = new Buffer(session,'base64').toString('utf-8');
+   let str =  Buffer.from(session,'base64').toString('utf-8');
     return JSON.parse(str||{});
 }
