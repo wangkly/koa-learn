@@ -105,7 +105,7 @@ var entries = [
     },
     {
         url:'/init-news',
-        method:'GET',
+        method:'POST',
         handler:getArticles
 
     },
