@@ -28,6 +28,12 @@ var entries = [
 
     },
     {
+        url:'/saveComments',
+        method:'POST',
+        handler:saveComments
+
+    },
+    {
         url:'/upload',
         method:'POST',
         handler:uploadFile

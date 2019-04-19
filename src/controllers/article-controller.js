@@ -67,3 +67,63 @@ exports.getArticleById = async (ctx,next)=>{
     }
     next();
 }
+
+
+
+
+exports.saveComments = async (ctx,next)=>{
+    let tokenId = ctx.cookies.get('tokenId');
+    let session = await getAsync(tokenId);
+    session = decodeSession(session)
+    if(!session.account){
+        ctx.body={status:200,success:false,errMsg:'请先登录'}
+    }else{
+
+        let postData = ctx.request.body;
+        //repliRef_id 针对某条评论做回复，该评论的id
+        let {article_id,content,repliRef_id} = postData;
+        let {userId,account,headImg} = session;
+        let client  = await MongoClient.connect(mongodurl,{useNewUrlParser: true });
+        let dbase = client.db('koa');
+        if(repliRef_id){//针对某条评论的回复 不允许针对评论的评论再评论
+            //先找到这条评论
+           let comment = await dbase.collection('comments').find({'_id':ObjectID(repliRef_id)});
+           if(comment){
+            let replies = comment.replies.push({
+                    article_id,
+                    content,
+                    repliRef_id:repliRef_id,
+                    author:account,
+                    userId,
+                    avatar:headImg,
+                    datetime:(new Date()).getTime(),
+                    replies:[]
+                })
+
+              await  dbase.collection('comments').findOneAndUpdate({'_id':ObjectID(repliRef_id)},{$set:{'replies':replies}});
+
+              ctx.body={status:200,success:true,errMsg:''}
+           }
+
+        }else{//直接对文章进行的回复
+           let resp = await dbase.collection('comments').insertOne({
+                article_id,
+                content,
+                repliRef_id:0,
+                author:account,
+                userId,
+                avatar:headImg,
+                datetime:(new Date()).getTime(),
+                replies:[]
+            })
+            
+            if(resp.insertedCount == 1){
+                ctx.body={status:200,success:true,errMsg:''}
+            }
+        }
+
+        
+    }
+
+    await next();
+}
