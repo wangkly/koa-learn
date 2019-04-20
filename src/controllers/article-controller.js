@@ -87,19 +87,24 @@ exports.saveComments = async (ctx,next)=>{
         let dbase = client.db('koa');
         if(repliRef_id){//针对某条评论的回复 不允许针对评论的评论再评论
             //先找到这条评论
-           let comment = await dbase.collection('comments').find({'_id':ObjectID(repliRef_id)});
+           let comment = await dbase.collection('comments').findOne({'_id':ObjectID(repliRef_id)});
+           
            if(comment){
-            let replies = comment.replies.push({
+            let replies =[];
+            replies.concat(comment.replies);
+            replies.push({
                     article_id,
                     content,
                     repliRef_id:repliRef_id,
                     author:account,
                     userId,
                     avatar:headImg,
+                    like:0,
+                    dislike:0,
                     datetime:(new Date()).getTime(),
                     replies:[]
                 })
-
+                
               await  dbase.collection('comments').findOneAndUpdate({'_id':ObjectID(repliRef_id)},{$set:{'replies':replies}});
 
               ctx.body={status:200,success:true,errMsg:''}
@@ -114,6 +119,8 @@ exports.saveComments = async (ctx,next)=>{
                 userId,
                 avatar:headImg,
                 datetime:(new Date()).getTime(),
+                like:0,
+                dislike:0,
                 replies:[]
             })
             
@@ -126,4 +133,18 @@ exports.saveComments = async (ctx,next)=>{
     }
 
     await next();
+}
+
+
+
+exports.getComments =async (ctx,next)=>{
+    let {id} = ctx.request.body;
+    let client = await MongoClient.connect(mongodurl,{useNewUrlParser: true });
+    let dbase = client.db('koa');
+
+    let comments = await dbase.collection('comments').find({'article_id':id}).toArray();
+    ctx.body={status:200,success:true,errMsg:'',data:comments}
+
+    await next();
+
 }
