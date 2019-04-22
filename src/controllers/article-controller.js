@@ -1,6 +1,7 @@
 var MongoClient = require('mongodb').MongoClient;
 var ObjectID = require('mongodb').ObjectID;
 var crypto = require('crypto');
+const uuidv1 = require('uuid/v1');
 const {promisify} = require('util');
 var mongodurl = "mongodb://localhost:27017/";
 import {decodeSession} from '../util';
@@ -74,6 +75,12 @@ exports.getArticleById = async (ctx,next)=>{
 exports.saveComments = async (ctx,next)=>{
     let tokenId = ctx.cookies.get('tokenId');
     let session = await getAsync(tokenId);
+    if(!session){
+        ctx.body={status:200,success:false,errMsg:'请先登录'};
+        await next();
+        return;
+    }
+
     session = decodeSession(session)
     if(!session.account){
         ctx.body={status:200,success:false,errMsg:'请先登录'}
@@ -93,6 +100,7 @@ exports.saveComments = async (ctx,next)=>{
             let replies =[];
             replies.concat(comment.replies);
             replies.push({
+                    _id:uuidv1(),
                     article_id,
                     content,
                     repliRef_id:repliRef_id,
@@ -147,4 +155,35 @@ exports.getComments =async (ctx,next)=>{
 
     await next();
 
+}
+
+
+exports.likeComment = async (ctx,next)=>{
+    let {id,repliRef_id} = ctx.request.body;
+    let client = await MongoClient.connect(mongodurl,{useNewUrlParser: true });
+    let dbase = client.db('koa');
+
+    if(repliRef_id){//针对回复的回复
+     await dbase.collection('comments').updateOne({_id:ObjectID(repliRef_id),'replies._id':id },{$inc:{'replies.$.like':1}})
+    }else{//直接针对文章的回复
+        await  dbase.collection('comments').updateOne({_id:ObjectID(id)},{$inc:{like:1}})
+    }
+    ctx.body={status:200,success:true,errMsg:''}
+    await next();
+}
+
+
+
+exports.dislikeComment = async (ctx,next)=>{
+    let {id,repliRef_id} = ctx.request.body;
+    let client = await MongoClient.connect(mongodurl,{useNewUrlParser: true });
+    let dbase = client.db('koa');
+
+    if(repliRef_id){//针对回复的回复
+     await dbase.collection('comments').updateOne({_id:ObjectID(repliRef_id),'replies._id':id },{$inc:{'replies.$.dislike':1}})
+    }else{//直接针对文章的回复
+        await  dbase.collection('comments').updateOne({_id:ObjectID(id)},{$inc:{dislike:1}})
+    }
+    ctx.body={status:200,success:true,errMsg:''}
+    await next();
 }

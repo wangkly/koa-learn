@@ -1,5 +1,5 @@
 import { registHandler,loginHandler,checkIfLogin} from './controllers/login-regist-controller';
-import {saveArticle,getArticles,getArticleById,saveComments,getComments} from './controllers/article-controller';
+import {saveArticle,getArticles,getArticleById,saveComments,getComments,likeComment,dislikeComment} from './controllers/article-controller';
 import {uploadFile} from './controllers/file-controller';
 var entries = [
     {
@@ -37,6 +37,18 @@ var entries = [
         url:'/getComments',
         method:'POST',
         handler:getComments
+
+    },
+    {
+        url:'/comments/like',
+        method:'POST',
+        handler:likeComment
+
+    },
+    {
+        url:'/comments/dislike',
+        method:'POST',
+        handler:dislikeComment
 
     },
     {
