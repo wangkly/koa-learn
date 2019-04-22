@@ -97,26 +97,40 @@ exports.saveComments = async (ctx,next)=>{
            let comment = await dbase.collection('comments').findOne({'_id':ObjectID(repliRef_id)});
            
            if(comment){
-            let replies =[];
-            replies.concat(comment.replies);
-            replies.push({
-                    _id:uuidv1(),
-                    article_id,
-                    content,
-                    repliRef_id:repliRef_id,
-                    author:account,
-                    userId,
-                    avatar:headImg,
-                    like:0,
-                    dislike:0,
-                    datetime:(new Date()).getTime(),
-                    replies:[]
-                })
-                
-              await  dbase.collection('comments').findOneAndUpdate({'_id':ObjectID(repliRef_id)},{$set:{'replies':replies}});
+            // let replies =[];
+            // replies.concat(comment.replies);
+            // replies.push({
+            //         _id:uuidv1(),
+            //         article_id,
+            //         content,
+            //         repliRef_id:repliRef_id,
+            //         author:account,
+            //         userId,
+            //         avatar:headImg,
+            //         like:0,
+            //         dislike:0,
+            //         datetime:(new Date()).getTime(),
+            //         replies:[]
+            //     })
+            //   await  dbase.collection('comments').findOneAndUpdate({'_id':ObjectID(repliRef_id)},{$set:{'replies':replies}});
 
-              ctx.body={status:200,success:true,errMsg:''}
-           }
+            let comm = {
+                _id:uuidv1(),
+                article_id,
+                content,
+                repliRef_id:repliRef_id,
+                author:account,
+                userId,
+                avatar:headImg,
+                like:0,
+                dislike:0,
+                datetime:(new Date()).getTime(),
+                replies:[]
+            }
+
+            await  dbase.collection('comments').findOneAndUpdate({'_id':ObjectID(repliRef_id)},{$push:{'replies':comm}});
+            ctx.body={status:200,success:true,errMsg:''}
+            }
 
         }else{//直接对文章进行的回复
            let resp = await dbase.collection('comments').insertOne({
