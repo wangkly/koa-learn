@@ -1,6 +1,7 @@
 import { registHandler,loginHandler,checkIfLogin} from './controllers/login-regist-controller';
 import {saveArticle,getArticles,getArticleById,saveComments,getComments,likeComment,dislikeComment} from './controllers/article-controller';
 import {uploadFile} from './controllers/file-controller';
+import {getUserInfo} from './controllers/user-controller';
 var entries = [
     {
         url:'/regist',
@@ -12,6 +13,12 @@ var entries = [
         url:'/login',
         method:'POST',
         handler:loginHandler
+
+    },
+    {
+        url:'/user-info',
+        method:'POST',
+        handler:getUserInfo
 
     },
     {
