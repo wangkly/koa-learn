@@ -17,9 +17,10 @@ exports.getUserInfo = async (ctx,next)=>{
 
     let client = await MongoClient.connect(mongodurl,{useNewUrlParser: true });
     let dbase = client.db('koa');
-    let userInfo = await dbase.collection('user').findOne({'_id':ObjectID(userId)}).project({password:0});
-
-   ctx.body={status:200,success:true,errMsg:'',data:userInfo}
+    //注意和 dbase.collection('user').find({'_id':ObjectID(userId)}).project({password:0}).toArray(); 差别
+    let userInfo = await dbase.collection('user').findOne({'_id':ObjectID(userId)},{projection:{password:0}});
+    
+    ctx.body={status:200,success:true,errMsg:'',data:userInfo}
 
    await next();
 

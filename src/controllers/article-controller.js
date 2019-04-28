@@ -55,6 +55,23 @@ exports.getArticles = async(ctx,next)=>{
 
 }
 
+/**
+ * 获取user的文章
+ */
+exports.getUserArticles = async(ctx,next)=>{
+    let postData = ctx.request.body;
+    let {pageNo,pageSize,userId} = postData; 
+    let client  = await MongoClient.connect(mongodurl,{useNewUrlParser: true });
+    let dbase = client.db('koa');
+    let articles = await dbase.collection('article').find({userId}).project({content:0}).skip(pageNo*pageSize).limit(pageSize).toArray();
+    ctx.body={
+        status:200,success:true,errMsg:'',
+        data: articles
+    }
+
+   await next();
+}
+
 
 exports.getArticleById = async (ctx,next)=>{
     let postData = ctx.request.body;
