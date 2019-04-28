@@ -28,7 +28,7 @@ exports.saveArticle = async (ctx,next)=>{
         // let first = entityMap[0]||{};
         // let cover = first.data && first.data.url;
         // console.log(cover)
-        let resp  = await dbase.collection('article').insertOne({title,content,author:session.account,cover,viewed:0,like:0,comment:0});
+        let resp  = await dbase.collection('article').insertOne({title,content,author:session.account,userId:session.userId,cover,viewed:0,like:0,comment:0});
         if(resp.insertedCount == 1){
             ctx.body={status:200,success:true,errMsg:''}
         }

@@ -25,7 +25,7 @@ exports.registHandler = async (ctx,next)=>{
 
     client.close();
 
-    next();
+    await next();
 
 }
 
@@ -62,7 +62,7 @@ exports.loginHandler= async (ctx,next)=>{
     }
 
     client.close();
-    next();
+    await next();
 
 }
 

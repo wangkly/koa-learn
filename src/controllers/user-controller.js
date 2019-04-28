@@ -25,3 +25,27 @@ exports.getUserInfo = async (ctx,next)=>{
    await next();
 
 }
+
+
+
+exports.updateUserInfo = async(ctx,next)=>{
+    let {userId,nickName,description,ocupation,location} = ctx.request.body;
+
+
+    await next();
+}
+
+
+/**
+ * 设置用户头像
+ */
+exports.setUserHeadImg = async(ctx,next)=>{
+    let {userId,headImg} = ctx.request.body;
+    let client = await MongoClient.connect(mongodurl,{useNewUrlParser:true});
+    let dbase = client.db('koa');
+    let resp =  await dbase.collection('user').findOneAndUpdate({'_id':ObjectID(userId)},{$set:{ headImg:headImg}});
+    console.log('updateImg ***',resp)
+    ctx.body={status:200,success:true,errMsg:''}
+
+    await next();
+}

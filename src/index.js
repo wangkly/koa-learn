@@ -44,11 +44,15 @@ app.use(async (ctx, next)=> {
           if(session.expire > (new Date()).getTime()){//未超时
             //后面只需要从ctx中取session值  
             // app.context.session = session; 这样不行 待查
-            if(session.expire - (new Date()).getTime() <  1 * 60 * 1000){
-                //更新expire 时间
-                session.expire =  (new Date()).getTime()+ EXPIRES;
-                redisClient.set(tokenId,encodeSession(session))
-            }
+            // if(session.expire - (new Date()).getTime() <  1 * 60 * 1000){
+            //     //更新expire 时间
+            //     session.expire =  (new Date()).getTime()+ EXPIRES;
+            //     redisClient.set(tokenId,encodeSession(session))
+            // }
+
+            //更新expire 时间
+            session.expire =  (new Date()).getTime()+ EXPIRES;
+            redisClient.set(tokenId,encodeSession(session))
 
           }
         }
