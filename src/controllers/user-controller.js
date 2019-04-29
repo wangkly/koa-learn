@@ -29,9 +29,12 @@ exports.getUserInfo = async (ctx,next)=>{
 
 
 exports.updateUserInfo = async(ctx,next)=>{
-    let {userId,nickName,description,ocupation,location} = ctx.request.body;
-
-
+    let {userId,nickName,desc,gender} = ctx.request.body;
+    let client = await MongoClient.connect(mongodurl,{useNewUrlParser:true});
+    let dbase = client.db('koa');
+    let resp = await dbase.collection('user').updateOne({_id:ObjectID(userId)},{$set:{nickName,desc,gender}});
+    console.log('updateUserInfo *** ',resp )
+    ctx.body={status:200,success:true,errMsg:''}
     await next();
 }
 

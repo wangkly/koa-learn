@@ -2,7 +2,7 @@ import { registHandler,loginHandler,checkIfLogin} from './controllers/login-regi
 import {saveArticle,getArticles,getArticleById,
     saveComments,getComments,likeComment,dislikeComment,getUserArticles} from './controllers/article-controller';
 import {uploadFile} from './controllers/file-controller';
-import {getUserInfo,setUserHeadImg} from './controllers/user-controller';
+import {getUserInfo,setUserHeadImg,updateUserInfo} from './controllers/user-controller';
 var entries = [
     {
         url:'/regist',
@@ -25,6 +25,12 @@ var entries = [
         url:'/user-setImg',
         method:'POST',
         handler:setUserHeadImg
+
+    },
+    {
+        url:'/user-update',
+        method:'POST',
+        handler:updateUserInfo
 
     },
     {
