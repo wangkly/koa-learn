@@ -1,4 +1,4 @@
-import { registHandler,loginHandler,checkIfLogin} from './controllers/login-regist-controller';
+import { registHandler,loginHandler,checkIfLogin,checkUserOperateRight} from './controllers/login-regist-controller';
 import {saveArticle,getArticles,getArticleById,
     saveComments,getComments,likeComment,dislikeComment,getUserArticles} from './controllers/article-controller';
 import {uploadFile} from './controllers/file-controller';
@@ -39,7 +39,11 @@ var entries = [
         handler:checkIfLogin
 
     },
-
+    {
+        url:'/checkCanOperate/:userId',
+        method:'GET',
+        handler:checkUserOperateRight
+    },
     {
         url:'/saveArticle',
         method:'POST',

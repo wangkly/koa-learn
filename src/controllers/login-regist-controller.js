@@ -73,14 +73,58 @@ exports.checkIfLogin = async(ctx,next)=>{
     let tokenId = ctx.cookies.get('tokenId');
     if(tokenId){//存在cookie
         let session = await getAsync(tokenId);
-        session = decodeSession(session)
-        if(session.expire > (new Date()).getTime()){//session未过期
-            ctx.body={status:200,success:true,errMsg:'',data:session}
+        if(session){
+
+            session = decodeSession(session)
+            if(session.expire > (new Date()).getTime()){//session未过期
+                ctx.body={status:200,success:true,errMsg:'',data:session}
+            }else{
+                ctx.cookies.set('tokenId', '')
+                redisClient.DEL('tokenId');
+                ctx.body={status:200,success:false,errMsg:'登录已过期'}
+            }
+
         }else{
-            ctx.body={status:200,success:false,errMsg:'登录已过期'}
+            ctx.body={status:200,success:false,errMsg:'未登录'}    
         }
+
     }else{
         ctx.body={status:200,success:false,errMsg:'未登录'}
     }
     await next();
+}
+
+/**
+ * 检查当前这个cookies里的tokenId
+ * 是否有权限修改传递的userId对应的用户信息的权限
+ */
+exports.checkUserOperateRight= async (ctx,next)=>{
+    let userId = ctx.params.userId
+    let tokenId = ctx.cookies.get('tokenId');
+    if(tokenId){
+        let session = await getAsync(tokenId);
+        if(session){
+            session = decodeSession(session)
+            if(session.expire > (new Date()).getTime()){//session未过期
+                if(session.userId != userId){
+                    ctx.body={status:200,success:false,errMsg:'非用户本人不可操作'}
+                }else{
+                    ctx.body={status:200,success:true,errMsg:'',data:session}
+                }
+            }else{
+                ctx.cookies.set('tokenId','');
+                redisClient.del('tokenId');
+                ctx.body={status:200,success:false,errMsg:'登录已过期'}
+            }
+        }else{
+            ctx.cookies.set('tokenId', '')
+            ctx.body={status:200,success:false,errMsg:'未登录'} 
+        }
+    }else{
+        //未登录则什么都不能做
+        ctx.body={status:200,success:false,errMsg:'未登录'} 
+    }
+
+    await next();
+
 }

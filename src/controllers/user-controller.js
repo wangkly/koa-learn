@@ -30,11 +30,39 @@ exports.getUserInfo = async (ctx,next)=>{
 
 exports.updateUserInfo = async(ctx,next)=>{
     let {userId,nickName,desc,gender} = ctx.request.body;
-    let client = await MongoClient.connect(mongodurl,{useNewUrlParser:true});
-    let dbase = client.db('koa');
-    let resp = await dbase.collection('user').updateOne({_id:ObjectID(userId)},{$set:{nickName,desc,gender}});
-    console.log('updateUserInfo *** ',resp )
-    ctx.body={status:200,success:true,errMsg:''}
+    //检查操作是否合法
+    let tokenId = ctx.cookies.get('tokenId');
+    if(tokenId){
+        let session = await getAsync(tokenId);
+        if(session){
+            session = decodeSession(session)
+            if(session.expire > (new Date()).getTime()){//session未过期
+                if(session.userId != userId){
+                    ctx.body={status:200,success:false,errMsg:'非用户本人不可操作'}
+                }else{
+
+                    let client = await MongoClient.connect(mongodurl,{useNewUrlParser:true});
+                    let dbase = client.db('koa');
+                    let resp = await dbase.collection('user').updateOne({_id:ObjectID(userId)},{$set:{nickName,desc,gender}});
+                    console.log('updateUserInfo *** ',resp )
+                    ctx.body={status:200,success:true,errMsg:''}
+                    
+                }
+            }else{
+                ctx.cookies.set('tokenId','');
+                redisClient.del('tokenId');
+                ctx.body={status:200,success:false,errMsg:'登录已过期'}
+            }
+
+        }else{
+            ctx.cookies.set('tokenId', '')
+            ctx.body={status:200,success:false,errMsg:'用户未登录'}
+        }
+
+    }else{
+        ctx.body={status:200,success:false,errMsg:'用户未登录'}
+    }
+
     await next();
 }
 
