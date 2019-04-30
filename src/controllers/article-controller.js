@@ -1,15 +1,11 @@
 var MongoClient = require('mongodb').MongoClient;
 var ObjectID = require('mongodb').ObjectID;
-var crypto = require('crypto');
+
 const uuidv1 = require('uuid/v1');
-const {promisify} = require('util');
+
 var mongodurl = "mongodb://localhost:27017/";
-import {decodeSession} from '../util';
 
-var redis = require("redis"),
-redisClient = redis.createClient();
-
-const getAsync = promisify(redisClient.get).bind(redisClient);
+import redisClient from '../redis-util';
 
 
 exports.saveArticle = async (ctx,next)=>{
@@ -18,8 +14,8 @@ exports.saveArticle = async (ctx,next)=>{
     let {title,content,cover} = postData;
     let client  = await MongoClient.connect(mongodurl,{useNewUrlParser: true });
     let dbase = client.db('koa');
-    let session = await getAsync(tokenId);
-     session = decodeSession(session)
+    let session = await redisClient.hgetallAsync(tokenId);
+    
     if(!session.account){
         ctx.body={status:200,success:false,errMsg:'请先登录'}
     }else{
@@ -91,14 +87,14 @@ exports.getArticleById = async (ctx,next)=>{
 
 exports.saveComments = async (ctx,next)=>{
     let tokenId = ctx.cookies.get('tokenId');
-    let session = await getAsync(tokenId);
+    let session = await redisClient.hgetallAsync(tokenId);
     if(!session){
         ctx.body={status:200,success:false,errMsg:'请先登录'};
         await next();
         return;
     }
 
-    session = decodeSession(session)
+    // session = decodeSession(session)
     if(!session.account){
         ctx.body={status:200,success:false,errMsg:'请先登录'}
     }else{

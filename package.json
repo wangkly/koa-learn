@@ -12,6 +12,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "bluebird": "^3.5.4",
     "koa": "^2.5.1",
     "koa-body": "^4.1.0",
     "koa-bodyparser": "^4.2.1",

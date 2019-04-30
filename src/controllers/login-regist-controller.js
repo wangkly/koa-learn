@@ -1,11 +1,10 @@
 var MongoClient = require('mongodb').MongoClient;
 var mongodurl = "mongodb://localhost:27017/";
-const {promisify} = require('util');
-var redis = require("redis"),
-    redisClient = redis.createClient();
-const getAsync = promisify(redisClient.get).bind(redisClient);
 
-import {EXPIRES,md5,encodeSession,decodeSession} from '../util';    
+import redisClient from '../redis-util';
+
+
+import {EXPIRES,md5} from '../util';    
 
 exports.registHandler = async (ctx,next)=>{
     let postData=ctx.request.body;
@@ -44,7 +43,7 @@ exports.loginHandler= async (ctx,next)=>{
             let session_id =  (new Date()).getTime() + Math.random();
             let expire = (new Date()).getTime()+ EXPIRES;
             let session = {
-                userId:resp._id,
+                userId:resp._id.toString(),
                 session_id,
                 expire,
                 account,
@@ -52,7 +51,7 @@ exports.loginHandler= async (ctx,next)=>{
             };
 
             let tokenId = session_id;
-            redisClient.set(tokenId,encodeSession(session))
+            redisClient.hmset(tokenId,session)
             //将用户信息保存到session,设置cookies;
             ctx.cookies.set('tokenId', tokenId)
 
@@ -66,21 +65,32 @@ exports.loginHandler= async (ctx,next)=>{
 
 }
 
+
+exports.logoutHandler =async(ctx,next)=>{
+    let tokenId = ctx.cookies.get('tokenId');
+    ctx.cookies.set('tokenId', '')
+    redisClient.del(tokenId);
+    ctx.body={status:200,success:true,errMsg:''}
+}
+
+
 /**
  * 检测用户是否登录
  */
 exports.checkIfLogin = async(ctx,next)=>{
+    
     let tokenId = ctx.cookies.get('tokenId');
     if(tokenId){//存在cookie
-        let session = await getAsync(tokenId);
-        if(session){
+       
+        let session = await redisClient.hgetallAsync(tokenId);
 
-            session = decodeSession(session)
+        if(session){
+           
             if(session.expire > (new Date()).getTime()){//session未过期
                 ctx.body={status:200,success:true,errMsg:'',data:session}
             }else{
                 ctx.cookies.set('tokenId', '')
-                redisClient.DEL('tokenId');
+                redisClient.del(tokenId);
                 ctx.body={status:200,success:false,errMsg:'登录已过期'}
             }
 
@@ -102,9 +112,9 @@ exports.checkUserOperateRight= async (ctx,next)=>{
     let userId = ctx.params.userId
     let tokenId = ctx.cookies.get('tokenId');
     if(tokenId){
-        let session = await getAsync(tokenId);
+        let session = await redisClient.hgetallAsync(tokenId);
         if(session){
-            session = decodeSession(session)
+            
             if(session.expire > (new Date()).getTime()){//session未过期
                 if(session.userId != userId){
                     ctx.body={status:200,success:false,errMsg:'非用户本人不可操作'}
@@ -113,7 +123,7 @@ exports.checkUserOperateRight= async (ctx,next)=>{
                 }
             }else{
                 ctx.cookies.set('tokenId','');
-                redisClient.del('tokenId');
+                redisClient.del(tokenId);
                 ctx.body={status:200,success:false,errMsg:'登录已过期'}
             }
         }else{
@@ -124,7 +134,5 @@ exports.checkUserOperateRight= async (ctx,next)=>{
         //未登录则什么都不能做
         ctx.body={status:200,success:false,errMsg:'未登录'} 
     }
-
     await next();
-
 }

@@ -1,17 +1,11 @@
 var MongoClient = require('mongodb').MongoClient;
 var ObjectID = require('mongodb').ObjectID;
-var crypto = require('crypto');
-const uuidv1 = require('uuid/v1');
-const {promisify} = require('util');
 
 var mongodurl = "mongodb://localhost:27017/";
-import {decodeSession,checkUserOperationLegal} from '../util';
 
-var redis = require("redis"),
-redisClient = redis.createClient();
+import {checkUserOperationLegal} from '../util';
 
-const getAsync = promisify(redisClient.get).bind(redisClient);
-
+import redisClient from '../redis-util';
 
 exports.getUserInfo = async (ctx,next)=>{
     let {userId}= ctx.request.body;
@@ -34,9 +28,9 @@ exports.updateUserInfo = async(ctx,next)=>{
     //检查操作是否合法
     let tokenId = ctx.cookies.get('tokenId');
     if(tokenId){
-        let session = await getAsync(tokenId);
+        let session = await redisClient.hgetallAsync(tokenId);
         if(session){
-            session = decodeSession(session)
+
             if(session.expire > (new Date()).getTime()){//session未过期
                 if(session.userId != userId){
                     ctx.body={status:200,success:false,errMsg:'非用户本人不可操作'}
@@ -86,6 +80,8 @@ exports.setUserHeadImg = async(ctx,next)=>{
     let client = await MongoClient.connect(mongodurl,{useNewUrlParser:true});
     let dbase = client.db('koa');
     let resp =  await dbase.collection('user').findOneAndUpdate({'_id':ObjectID(userId)},{$set:{ headImg:headImg}});
+
+    redisClient.hmset(tokenId,['headImg',headImg])
     
     ctx.body={status:200,success:true,errMsg:''}
 

@@ -1,9 +1,15 @@
 
 var crypto = require('crypto');
 const {promisify} = require('util');
-var redis = require("redis"),
-redisClient = redis.createClient();
-const getAsync = promisify(redisClient.get).bind(redisClient);
+
+
+import * as bluebird from 'bluebird';
+var redis = require("redis");
+
+bluebird.promisifyAll(redis);
+var  redisClient = redis.createClient();
+
+const hgetAllAsync = promisify(redisClient.hgetall).bind(redisClient);
 
 exports.EXPIRES = 20 * 60 * 1000;
 
@@ -28,10 +34,9 @@ exports.decodeSession = (session)=>{
  */
 exports.checkUserOperationLegal = async (tokenId,userId)=>{
     if(tokenId){
-        let session = await getAsync(tokenId);
+        let session = await hgetAllAsync(tokenId);
         if(session){
-            let str =  Buffer.from(session,'base64').toString('utf-8');
-            session =JSON.parse(str||{});
+         
             if(session.expire > (new Date()).getTime()){//session未过期
                 if(session.userId != userId){
                     return false;

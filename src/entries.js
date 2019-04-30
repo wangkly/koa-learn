@@ -1,4 +1,4 @@
-import { registHandler,loginHandler,checkIfLogin,checkUserOperateRight} from './controllers/login-regist-controller';
+import { registHandler,loginHandler,checkIfLogin,checkUserOperateRight,logoutHandler} from './controllers/login-regist-controller';
 import {saveArticle,getArticles,getArticleById,
     saveComments,getComments,likeComment,dislikeComment,getUserArticles} from './controllers/article-controller';
 import {uploadFile} from './controllers/file-controller';
@@ -15,6 +15,11 @@ var entries = [
         method:'POST',
         handler:loginHandler
 
+    },
+    {
+        url:'/logout',
+        method:'GET',
+        handler:logoutHandler
     },
     {
         url:'/user-info',

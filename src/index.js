@@ -1,15 +1,12 @@
 require("babel-register");
 var Koa = require('koa');
-var path = require('path')
 const koaStatic = require('koa-static');
 const koaBody = require('koa-body');
 const bodyParser = require('koa-bodyparser');
-const {promisify} = require('util');
-var redis = require("redis"),
-redisClient = redis.createClient();
-const getAsync = promisify(redisClient.get).bind(redisClient);
 
-import {encodeSession,decodeSession,EXPIRES} from './util';
+import redisClient from './redis-util';
+
+import {EXPIRES} from './util';
 
 import {getRoutes} from './routers';
 
@@ -26,7 +23,6 @@ app.use(async (ctx, next)=> {
     ctx.type = 'application/json; charset=utf-8';
     if (ctx.method == 'OPTIONS') {
       ctx.status = 200;
-      // ctx.body =null; 
     } else {
       await next();
     }
@@ -37,9 +33,11 @@ app.use(async (ctx, next)=> {
   app.use(async(ctx,next)=>{
       let tokenId = ctx.cookies.get('tokenId');
       if(tokenId){//如果存在，则去redis中捞一下session
-        let session = await getAsync(tokenId);
+
+        let session = await redisClient.hgetallAsync(tokenId);
+
         if(session){
-          session = decodeSession(session);
+  
           //判断session 是否过期逻辑
           if(session.expire > (new Date()).getTime()){//未超时
             //后面只需要从ctx中取session值  
@@ -51,8 +49,8 @@ app.use(async (ctx, next)=> {
             // }
 
             //更新expire 时间
-            session.expire =  (new Date()).getTime()+ EXPIRES;
-            redisClient.set(tokenId,encodeSession(session))
+            let expire =  (new Date()).getTime()+ EXPIRES;
+            redisClient.hmset(tokenId,['expire',expire])
 
           }
         }
