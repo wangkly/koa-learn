@@ -3,8 +3,9 @@ var ObjectID = require('mongodb').ObjectID;
 var crypto = require('crypto');
 const uuidv1 = require('uuid/v1');
 const {promisify} = require('util');
+
 var mongodurl = "mongodb://localhost:27017/";
-import {decodeSession} from '../util';
+import {decodeSession,checkUserOperationLegal} from '../util';
 
 var redis = require("redis"),
 redisClient = redis.createClient();
@@ -44,7 +45,7 @@ exports.updateUserInfo = async(ctx,next)=>{
                     let client = await MongoClient.connect(mongodurl,{useNewUrlParser:true});
                     let dbase = client.db('koa');
                     let resp = await dbase.collection('user').updateOne({_id:ObjectID(userId)},{$set:{nickName,desc,gender}});
-                    console.log('updateUserInfo *** ',resp )
+                    
                     ctx.body={status:200,success:true,errMsg:''}
                     
                 }
@@ -67,15 +68,25 @@ exports.updateUserInfo = async(ctx,next)=>{
 }
 
 
+
 /**
  * 设置用户头像
  */
 exports.setUserHeadImg = async(ctx,next)=>{
     let {userId,headImg} = ctx.request.body;
+    let tokenId = ctx.cookies.get('tokenId');
+    let result = await checkUserOperationLegal(tokenId,userId);
+
+    if(!result){
+        ctx.body={status:200,success:false,errMsg:'非法操作'};
+        await next();
+        return;
+    }
+
     let client = await MongoClient.connect(mongodurl,{useNewUrlParser:true});
     let dbase = client.db('koa');
     let resp =  await dbase.collection('user').findOneAndUpdate({'_id':ObjectID(userId)},{$set:{ headImg:headImg}});
-    console.log('updateImg ***',resp)
+    
     ctx.body={status:200,success:true,errMsg:''}
 
     await next();
