@@ -6,6 +6,7 @@ const uuidv1 = require('uuid/v1');
 var mongodurl = "mongodb://localhost:27017/";
 
 import redisClient from '../redis-util';
+import {loginstatuscheck} from './user-check-controller';
 
 
 exports.saveArticle = async (ctx,next)=>{
@@ -15,16 +16,17 @@ exports.saveArticle = async (ctx,next)=>{
     let client  = await MongoClient.connect(mongodurl,{useNewUrlParser: true });
     let dbase = client.db('koa');
     let session = await redisClient.hgetallAsync(tokenId);
-    
-    if(!session.account){
-        ctx.body={status:200,success:false,errMsg:'请先登录'}
+    //检查登录状态
+    let result = await loginstatuscheck(ctx);
+    if(!result.status){
+        ctx.body={status:200,success:false,errMsg:result.msg}
     }else{
         // let contentObj = JSON.parse(content);
         // let {blocks,entityMap} = contentObj;
         // let first = entityMap[0]||{};
         // let cover = first.data && first.data.url;
         // console.log(cover)
-        let resp  = await dbase.collection('article').insertOne({title,content,author:session.account,userId:session.userId,cover,viewed:0,like:0,comment:0});
+        let resp  = await dbase.collection('article').insertOne({title,content,author:session.nickName||session.account,userId:session.userId,cover,viewed:0,like:0,comment:0});
         if(resp.insertedCount == 1){
             ctx.body={status:200,success:true,errMsg:''}
         }
@@ -88,15 +90,13 @@ exports.getArticleById = async (ctx,next)=>{
 exports.saveComments = async (ctx,next)=>{
     let tokenId = ctx.cookies.get('tokenId');
     let session = await redisClient.hgetallAsync(tokenId);
-    if(!session){
+
+    //检查登录状态
+    let result = await loginstatuscheck(ctx);
+    if(!result.status){
         ctx.body={status:200,success:false,errMsg:'请先登录'};
         await next();
         return;
-    }
-
-    // session = decodeSession(session)
-    if(!session.account){
-        ctx.body={status:200,success:false,errMsg:'请先登录'}
     }else{
 
         let postData = ctx.request.body;
@@ -187,6 +187,15 @@ exports.getComments =async (ctx,next)=>{
 
 exports.likeComment = async (ctx,next)=>{
     let {id,repliRef_id} = ctx.request.body;
+
+    //检查登录状态
+    let result = await loginstatuscheck(ctx);
+    if(!result.status){
+        ctx.body={status:200,success:false,errMsg:'请先登录'};
+        await next();
+        return;
+    }
+
     let client = await MongoClient.connect(mongodurl,{useNewUrlParser: true });
     let dbase = client.db('koa');
 
@@ -203,6 +212,15 @@ exports.likeComment = async (ctx,next)=>{
 
 exports.dislikeComment = async (ctx,next)=>{
     let {id,repliRef_id} = ctx.request.body;
+
+    //检查登录状态
+    let result = await loginstatuscheck(ctx);
+    if(!result.status){
+        ctx.body={status:200,success:false,errMsg:'请先登录'};
+        await next();
+        return;
+    }
+
     let client = await MongoClient.connect(mongodurl,{useNewUrlParser: true });
     let dbase = client.db('koa');
 

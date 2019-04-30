@@ -3,7 +3,7 @@ var ObjectID = require('mongodb').ObjectID;
 
 var mongodurl = "mongodb://localhost:27017/";
 
-import {checkUserOperationLegal} from '../util';
+import {checkIfUserCanOperate} from './user-check-controller';
 
 import redisClient from '../redis-util';
 
@@ -27,35 +27,20 @@ exports.updateUserInfo = async(ctx,next)=>{
     let {userId,nickName,desc,gender} = ctx.request.body;
     //检查操作是否合法
     let tokenId = ctx.cookies.get('tokenId');
-    if(tokenId){
-        let session = await redisClient.hgetallAsync(tokenId);
-        if(session){
 
-            if(session.expire > (new Date()).getTime()){//session未过期
-                if(session.userId != userId){
-                    ctx.body={status:200,success:false,errMsg:'非用户本人不可操作'}
-                }else{
+    let result = await checkIfUserCanOperate(tokenId,userId);
 
-                    let client = await MongoClient.connect(mongodurl,{useNewUrlParser:true});
-                    let dbase = client.db('koa');
-                    let resp = await dbase.collection('user').updateOne({_id:ObjectID(userId)},{$set:{nickName,desc,gender}});
-                    
-                    ctx.body={status:200,success:true,errMsg:''}
-                    
-                }
-            }else{
-                ctx.cookies.set('tokenId','');
-                redisClient.del('tokenId');
-                ctx.body={status:200,success:false,errMsg:'登录已过期'}
-            }
+    if(result && result.status){
 
-        }else{
-            ctx.cookies.set('tokenId', '')
-            ctx.body={status:200,success:false,errMsg:'用户未登录'}
-        }
+        let client = await MongoClient.connect(mongodurl,{useNewUrlParser:true});
+        let dbase = client.db('koa');
+        let resp = await dbase.collection('user').updateOne({_id:ObjectID(userId)},{$set:{nickName,desc,gender}});
+        
+        ctx.body={status:200,success:true,errMsg:''}
+
 
     }else{
-        ctx.body={status:200,success:false,errMsg:'用户未登录'}
+        ctx.body={status:200,success:false,errMsg:'非用户本人不可操作'}
     }
 
     await next();
@@ -69,9 +54,9 @@ exports.updateUserInfo = async(ctx,next)=>{
 exports.setUserHeadImg = async(ctx,next)=>{
     let {userId,headImg} = ctx.request.body;
     let tokenId = ctx.cookies.get('tokenId');
-    let result = await checkUserOperationLegal(tokenId,userId);
+    let result = await checkIfUserCanOperate(tokenId,userId);
 
-    if(!result){
+    if(!result.status){
         ctx.body={status:200,success:false,errMsg:'非法操作'};
         await next();
         return;
