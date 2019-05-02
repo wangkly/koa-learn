@@ -1,5 +1,7 @@
 var MongoClient = require('mongodb').MongoClient;
 var mongodurl = "mongodb://localhost:27017/";
+var svgCaptcha = require('svg-captcha');
+const uuidv1 = require('uuid/v1');
 
 import redisClient from '../redis-util';
 
@@ -9,7 +11,17 @@ import {EXPIRES,md5} from '../util';
 
 exports.registHandler = async (ctx,next)=>{
     let postData=ctx.request.body;
-    let {email,password} = postData;
+    let {email,password,vcode} = postData;
+
+    let key = ctx.cookies.get('regist-vc-key');
+
+    let serverVcode = await redisClient.hgetAsync('regist',key);
+    
+    if(vcode != serverVcode.toLowerCase()){
+        ctx.body={status:200,success:false,errMsg:'验证码填写错误'};
+        await next();
+        return;
+    }
 
     let client = await MongoClient.connect(mongodurl,{ useNewUrlParser: true })
     var dbase = client.db("koa");
@@ -72,8 +84,41 @@ exports.logoutHandler =async(ctx,next)=>{
     let tokenId = ctx.cookies.get('tokenId');
     ctx.cookies.set('tokenId', '')
     redisClient.del(tokenId);
-    ctx.body={status:200,success:true,errMsg:''}
+    ctx.body={status:200,success:true,errMsg:''};
+    await next();
 }
+
+
+/**
+ * 生成验证码
+ */
+exports.createSvgCaptchaCode = async(ctx,next)=>{
+    let queryObj = ctx.query;
+    var captcha = svgCaptcha.create({
+        size:4,
+        noise:2,
+        color:true,
+        with:80,
+        height:40,
+        background: '#cc9966'
+    });
+
+    //从cookie中取，取不到则重新生成一个
+    let key = ctx.cookies.get('regist-vc-key');
+    if(!key){
+        key=uuidv1();
+    }
+
+    //存到redis
+    redisClient.hmset(queryObj.page,[key,captcha.text]);
+    ctx.cookies.set('regist-vc-key', key);
+    
+    ctx.set('Content-Type', 'image/svg+xml');
+    ctx.body=(String(captcha.data));
+
+    await next();
+}
+
 
 
 /**
@@ -81,17 +126,16 @@ exports.logoutHandler =async(ctx,next)=>{
  */
 exports.checkIfLogin = async(ctx,next)=>{
     let tokenId = ctx.cookies.get('tokenId');
-    let session = await redisClient.hgetallAsync(tokenId);
     let result = await loginstatuscheck(ctx);
-
+    
     if(result && result.status){
-
-            ctx.body={status:200,success:true,errMsg:'',data:session};
+        let session = await redisClient.hgetallAsync(tokenId);
+        ctx.body={status:200,success:true,errMsg:'',data:session};
 
     }else{
-            ctx.cookies.set('tokenId', '')
-            tokenId && redisClient.del(tokenId);
-            ctx.body={status:200,success:false,errMsg:result.msg}
+        ctx.cookies.set('tokenId', '')
+        tokenId && redisClient.del(tokenId);
+        ctx.body={status:200,success:false,errMsg:result.msg}
 
     }
     

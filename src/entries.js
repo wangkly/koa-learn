@@ -1,4 +1,4 @@
-import { registHandler,loginHandler,checkIfLogin,checkUserOperateRight,logoutHandler} from './controllers/login-regist-controller';
+import { registHandler,loginHandler,checkIfLogin,checkUserOperateRight,logoutHandler,createSvgCaptchaCode} from './controllers/login-regist-controller';
 import {saveArticle,getArticles,getArticleById,
     saveComments,getComments,likeComment,dislikeComment,getUserArticles} from './controllers/article-controller';
 import {uploadFile} from './controllers/file-controller';
@@ -20,6 +20,11 @@ var entries = [
         url:'/logout',
         method:'GET',
         handler:logoutHandler
+    },
+    {
+        url:'/regist/validate-code',
+        method:'GET',
+        handler:createSvgCaptchaCode
     },
     {
         url:'/user-info',
