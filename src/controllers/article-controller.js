@@ -12,7 +12,7 @@ import {loginstatuscheck} from './user-check-controller';
 exports.saveArticle = async (ctx,next)=>{
     let tokenId = ctx.cookies.get('tokenId');
     let postData = ctx.request.body;
-    let {title,content,cover} = postData;
+    let {title,content,cover,desc} = postData;
     let client  = await MongoClient.connect(mongodurl,{useNewUrlParser: true });
     let dbase = client.db('koa');
     let session = await redisClient.hgetallAsync(tokenId);
@@ -26,7 +26,7 @@ exports.saveArticle = async (ctx,next)=>{
         // let first = entityMap[0]||{};
         // let cover = first.data && first.data.url;
         // console.log(cover)
-        let resp  = await dbase.collection('article').insertOne({title,content,author:session.nickName||session.account,userId:session.userId,cover,viewed:0,like:0,comment:0});
+        let resp  = await dbase.collection('article').insertOne({title,content,author:session.nickName||session.account,userId:session.userId,cover,desc,viewed:0,like:0,comment:0});
         if(resp.insertedCount == 1){
             ctx.body={status:200,success:true,errMsg:''}
         }
@@ -35,6 +35,25 @@ exports.saveArticle = async (ctx,next)=>{
     client.close();
     next();
 
+}
+
+
+exports.likeArticle=async (ctx,next)=>{
+    let {articleId} = ctx.request.body; 
+    //检查登录状态
+    let result = await loginstatuscheck(ctx);
+    if(!result.status){
+        ctx.body={status:200,success:false,errMsg:'请先登录'};
+        await next();
+        return;
+    }else{
+        let client  = await MongoClient.connect(mongodurl,{useNewUrlParser: true });
+        let dbase = client.db('koa');
+        await dbase.collection('article').updateOne({_id:ObjectID(articleId)},{$inc:{like:1}})
+    
+        ctx.body={status:200,success:true,errMsg:''}
+    }
+    await next();
 }
 
 
@@ -158,6 +177,8 @@ exports.saveComments = async (ctx,next)=>{
                 dislike:0,
                 replies:[]
             })
+            //评论+1
+            await dbase.collection('article').updateOne({_id:ObjectID(article_id)},{$inc:{comment:1}})
             
             if(resp.insertedCount == 1){
                 ctx.body={status:200,success:true,errMsg:''}

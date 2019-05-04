@@ -1,6 +1,6 @@
 import { registHandler,loginHandler,checkIfLogin,checkUserOperateRight,logoutHandler,createSvgCaptchaCode} from './controllers/login-regist-controller';
 import {saveArticle,getArticles,getArticleById,
-    saveComments,getComments,likeComment,dislikeComment,getUserArticles} from './controllers/article-controller';
+    saveComments,getComments,likeComment,dislikeComment,getUserArticles,likeArticle} from './controllers/article-controller';
 import {uploadFile} from './controllers/file-controller';
 import {getUserInfo,setUserHeadImg,updateUserInfo} from './controllers/user-controller';
 var entries = [
@@ -58,6 +58,12 @@ var entries = [
         url:'/saveArticle',
         method:'POST',
         handler:saveArticle
+
+    },
+    {
+        url:'/likeArticle',
+        method:'POST',
+        handler:likeArticle
 
     },
     {
