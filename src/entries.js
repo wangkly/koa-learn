@@ -3,6 +3,7 @@ import {saveArticle,getArticles,getArticleById,
     saveComments,getComments,likeComment,dislikeComment,getUserArticles,likeArticle} from './controllers/article-controller';
 import {uploadFile} from './controllers/file-controller';
 import {getUserInfo,setUserHeadImg,updateUserInfo} from './controllers/user-controller';
+import {followTargetUser,unfollow,checkFollowed} from './controllers/follow-controller';
 var entries = [
     {
         url:'/regist',
@@ -36,6 +37,21 @@ var entries = [
         method:'POST',
         handler:setUserHeadImg
 
+    },
+    {
+        url:'/follow',
+        method:'POST',
+        handler:followTargetUser
+    },
+    {
+        url:'/unfollow',
+        method:'POST',
+        handler:unfollow
+    },
+    {
+        url:'/check-follow',
+        method:'POST',
+        handler:checkFollowed
     },
     {
         url:'/user-update',

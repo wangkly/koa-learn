@@ -1,0 +1,6 @@
+CREATE table if not exists follow_relation (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY ,
+    user_id VARCHAR(500),
+    fol_user_id VARCHAR(500)
+
+)ENGINE=InnoDB DEFAULT CHARSET=utf8;
