@@ -6,6 +6,7 @@ var mongodurl = "mongodb://localhost:27017/";
 import {checkIfUserCanOperate} from './user-check-controller';
 
 import redisClient from '../redis-util';
+import {mysqlConn,mysqlQuery} from '../mysql-util';
 
 exports.getUserInfo = async (ctx,next)=>{
     let {userId}= ctx.request.body;
@@ -18,6 +19,33 @@ exports.getUserInfo = async (ctx,next)=>{
     ctx.body={status:200,success:true,errMsg:'',data:userInfo}
 
    await next();
+
+}
+
+//查询用户的关注对象
+exports.queryFollows = async(ctx,next)=>{
+    let {userId} = ctx.request.body;
+    let sql = 'select fol_user_id from follow_relation where user_id =? limit 0,10';
+    let resp = await mysqlQuery(sql,[userId]);
+    let ids = resp.map((v,k)=>ObjectID(v.fol_user_id));
+
+    let client = await MongoClient.connect(mongodurl,{useNewUrlParser: true });
+    let dbase = client.db('koa');
+
+    let result = await dbase.collection('user').find({'_id':{$in:ids}}).project({password:0}).toArray();
+
+    console.log('result ***',result)
+
+    ctx.body={status:200,success:true,errMsg:'',data:result}
+    await next();
+}
+
+
+//查询关注该用户的人，粉丝
+exports.queryFolowers = async(ctx,next)=>{
+
+
+
 
 }
 
