@@ -24,9 +24,13 @@ exports.getUserInfo = async (ctx,next)=>{
 
 //查询用户的关注对象
 exports.queryFollows = async(ctx,next)=>{
-    let {userId} = ctx.request.body;
-    let sql = 'select fol_user_id from follow_relation where user_id =? limit 0,10';
-    let resp = await mysqlQuery(sql,[userId]);
+    let {userId,pageNo=1,pageSize} = ctx.request.body;
+    let countsql = 'select count(*) as total from follow_relation where user_id =?';
+    let countRes = await mysqlQuery(countsql,[userId]);
+    let total = countRes[0].total||0;
+
+    let sql = 'select fol_user_id from follow_relation where user_id =? limit ?,?';
+    let resp = await mysqlQuery(sql,[userId,(pageNo-1)*pageSize,pageSize]);
     let ids = resp.map((v,k)=>ObjectID(v.fol_user_id));
 
     let client = await MongoClient.connect(mongodurl,{useNewUrlParser: true });
@@ -34,9 +38,9 @@ exports.queryFollows = async(ctx,next)=>{
 
     let result = await dbase.collection('user').find({'_id':{$in:ids}}).project({password:0}).toArray();
 
-    console.log('result ***',result)
+    // console.log('result ***',result)
 
-    ctx.body={status:200,success:true,errMsg:'',data:result}
+    ctx.body={status:200,success:true,errMsg:'',data:{result,total}}
     await next();
 }
 
