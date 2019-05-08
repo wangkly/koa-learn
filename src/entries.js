@@ -2,7 +2,7 @@ import { registHandler,loginHandler,checkIfLogin,checkUserOperateRight,logoutHan
 import {saveArticle,getArticles,getArticleById,
     saveComments,getComments,likeComment,dislikeComment,getUserArticles,likeArticle} from './controllers/article-controller';
 import {uploadFile} from './controllers/file-controller';
-import {getUserInfo,setUserHeadImg,updateUserInfo,queryFollows,queryFolowers} from './controllers/user-controller';
+import {getUserInfo,setUserHeadImg,updateUserInfo,queryFollows,queryFolowers,countFollow} from './controllers/user-controller';
 import {followTargetUser,unfollow,checkFollowed} from './controllers/follow-controller';
 var entries = [
     {
@@ -57,6 +57,11 @@ var entries = [
         url:'/query-followers',
         method:'POST',
         handler:queryFolowers
+    },
+    {
+        url:'/follow-count',
+        method:'POST',
+        handler:countFollow
     },
     {
         url:'/check-follow',
