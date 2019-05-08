@@ -3,7 +3,7 @@ var ObjectID = require('mongodb').ObjectID;
 
 var mongodurl = "mongodb://localhost:27017/";
 
-import {checkIfUserCanOperate} from './user-check-controller';
+import {checkIfUserCanOperate,loginstatuscheck} from './user-check-controller';
 
 import redisClient from '../redis-util';
 import {mysqlConn,mysqlQuery} from '../mysql-util';
@@ -39,6 +39,7 @@ exports.countFollow = async (ctx,next)=>{
 
 //查询用户的关注对象
 exports.queryFollows = async(ctx,next)=>{
+    let tokenId = ctx.cookies.get('tokenId');
     let {userId,pageNo=1,pageSize=10} = ctx.request.body;
     let countsql = 'select count(*) as total from follow_relation where user_id =?';
     let countRes = await mysqlQuery(countsql,[userId]);
@@ -53,6 +54,29 @@ exports.queryFollows = async(ctx,next)=>{
 
     let result = await dbase.collection('user').find({'_id':{$in:ids}}).project({password:0}).toArray();
 
+    result.map((user)=>user.following=false);
+
+    let targetIds = result.map(user=>String(user._id));
+    
+    let checksql = `select fol_user_id from follow_relation where user_id =?  and fol_user_id in (?)`;
+    //检查登录状态
+    let loginStatus = await loginstatuscheck(ctx);
+    if(loginStatus.status && targetIds.length > 0){
+        let session = await redisClient.hgetallAsync(tokenId);
+        let checkResp = await mysqlQuery(checksql,[session.userId,[targetIds]]);
+        let objIds = checkResp.map(item=>item.fol_user_id);
+        console.log('objIds ***',objIds)
+        result.map((user)=>{
+            console.log('user._id ***',user._id)
+            console.log('objIds.indexOf  ***',objIds.indexOf(user._id))
+            if(objIds.indexOf(user._id) > -1){
+                user.following =true;
+            }
+            return user;
+        })
+
+    }
+
     ctx.body={status:200,success:true,errMsg:'',data:{result,total}}
     await next();
 }
@@ -60,6 +84,7 @@ exports.queryFollows = async(ctx,next)=>{
 
 //查询关注该用户的人，粉丝
 exports.queryFolowers = async(ctx,next)=>{
+    let tokenId = ctx.cookies.get('tokenId');
     let {userId,pageNo=1,pageSize=10} = ctx.request.body;
     let countsql = 'select count(*) as total from follow_relation where fol_user_id =?';
     let countRes = await mysqlQuery(countsql,[userId]);
@@ -73,6 +98,32 @@ exports.queryFolowers = async(ctx,next)=>{
     let dbase = client.db('koa');
 
     let result = await dbase.collection('user').find({'_id':{$in:ids}}).project({password:0}).toArray();
+
+    result.map((user)=>user.following=false);
+
+    let targetIds = result.map(user=>"'"+user._id+"'");
+    // let targetIds = result.map(user=>String(user._id));
+    console.log('targetIds ***',targetIds)
+    
+    // let checksql = `select fol_user_id from follow_relation where user_id =?  and fol_user_id in (?)`;
+    //检查登录状态
+    let loginStatus = await loginstatuscheck(ctx);
+    if(loginStatus.status && targetIds.length > 0){
+        let session = await redisClient.hgetallAsync(tokenId);
+        let checksql = `select fol_user_id from follow_relation where user_id ='${session.userId}'  and fol_user_id in (${targetIds.join(',')})`;
+        console.log('checksql ***',checksql)
+        let checkResp = await mysqlQuery(checksql);
+        // let checkResp = await mysqlQuery(checksql,[session.userId,[targetIds]]);
+        let objIds = checkResp.map(item=>item.fol_user_id);
+        console.log('objIds ***',objIds)
+        result.map((user)=>{
+            if(objIds.indexOf(user._id) > -1){
+                user.following =true;
+            }
+            return user;
+        })
+
+    }
 
     ctx.body={status:200,success:true,errMsg:'',data:{result,total}}
     await next();
