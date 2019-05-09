@@ -26,7 +26,18 @@ exports.saveArticle = async (ctx,next)=>{
         // let first = entityMap[0]||{};
         // let cover = first.data && first.data.url;
         // console.log(cover)
-        let resp  = await dbase.collection('article').insertOne({title,content,author:session.nickName||session.account,userId:session.userId,cover,desc,viewed:0,like:0,comment:0});
+        let resp  = await dbase.collection('article').insertOne({
+                                            title,
+                                            content,
+                                            author:session.nickName||session.account,
+                                            userId:session.userId,
+                                            cover,
+                                            desc,
+                                            viewed:0,
+                                            like:0,
+                                            comment:0,
+                                            addtime:Date.now()
+                                        });
         if(resp.insertedCount == 1){
             ctx.body={status:200,success:true,errMsg:''}
         }
@@ -35,6 +46,15 @@ exports.saveArticle = async (ctx,next)=>{
     client.close();
     next();
 
+}
+
+//获取首页banners
+exports.getBanners =async(ctx,next)=>{
+    let client = await MongoClient.connect(mongodurl,{useNewUrlParser:true});
+    let dbase = client.db('koa');
+    let banners = await dbase.collection('banners').find({}).toArray();
+    ctx.body={status:200,success:true,errMsg:'',data:banners};
+    await next();
 }
 
 
@@ -62,13 +82,13 @@ exports.getArticles = async(ctx,next)=>{
     let {pageNo,pageSize} = postData; 
     let client  = await MongoClient.connect(mongodurl,{useNewUrlParser: true });
     let dbase = client.db('koa');
-    let articles = await dbase.collection('article').find({}).project({content:0}).skip(pageNo*pageSize).limit(pageSize).toArray();
+    let articles = await dbase.collection('article').find({}).project({content:0}).sort({addtime:-1}).skip(pageNo*pageSize).limit(pageSize).toArray();
     ctx.body={
         status:200,success:true,errMsg:'',
         data: articles
     }
 
-    next();
+   await next();
 
 }
 

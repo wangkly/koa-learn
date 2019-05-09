@@ -1,5 +1,5 @@
 import { registHandler,loginHandler,checkIfLogin,checkUserOperateRight,logoutHandler,createSvgCaptchaCode} from './controllers/login-regist-controller';
-import {saveArticle,getArticles,getArticleById,
+import {saveArticle,getArticles,getBanners,getArticleById,
     saveComments,getComments,likeComment,dislikeComment,getUserArticles,likeArticle} from './controllers/article-controller';
 import {uploadFile} from './controllers/file-controller';
 import {getUserInfo,setUserHeadImg,updateUserInfo,queryFollows,queryFolowers,countFollow} from './controllers/user-controller';
@@ -176,32 +176,7 @@ var entries = [
     {
         url:'/init-banner',
         method:'GET',
-        handler:(ctx,next)=>{
-            ctx.type = 'application/json';
-            ctx.response.body=[{
-                id:1,
-                name:'banner1',
-                context:'this is banner 1',
-                href:'www.baidu.com',
-            },{
-                id:2,
-                name:'banner2',
-                context:'this is banner 2',
-                href:'www.1000.com',
-            },{
-                id:3,
-                name:'banner3',
-                context:'this is banner 3',
-                href:'www.google.com',
-            },
-            {
-                id:4,
-                name:'banner4',
-                context:'this is banner 4',
-                href:'www.qianmi.com',
-            }]
-        }
-
+        handler:getBanners
     },
     {
         url:'/init-news',
