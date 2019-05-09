@@ -56,20 +56,18 @@ exports.queryFollows = async(ctx,next)=>{
 
     result.map((user)=>user.following=false);
 
-    let targetIds = result.map(user=>String(user._id));
+    let targetIds = result.map(user=>`'${user._id.toString()}'`);//objectId => string
     
-    let checksql = `select fol_user_id from follow_relation where user_id =?  and fol_user_id in (?)`;
+    // let checksql = `select fol_user_id from follow_relation where user_id =?  and fol_user_id in (?)`; //await mysqlQuery(checksql,[session.userId,[targetIds]]);这种方式不知道为什么不行，targetIds 数量超过1会报错
     //检查登录状态
     let loginStatus = await loginstatuscheck(ctx);
     if(loginStatus.status && targetIds.length > 0){
         let session = await redisClient.hgetallAsync(tokenId);
-        let checkResp = await mysqlQuery(checksql,[session.userId,[targetIds]]);
-        let objIds = checkResp.map(item=>item.fol_user_id);
-        console.log('objIds ***',objIds)
+        let checksql = `select fol_user_id from follow_relation where user_id ='${session.userId}'  and fol_user_id in (${targetIds.join(',')})`;
+        let checkResp = await mysqlQuery(checksql);
+        let objIds = checkResp.map(item=>item.fol_user_id.toString());
         result.map((user)=>{
-            console.log('user._id ***',user._id)
-            console.log('objIds.indexOf  ***',objIds.indexOf(user._id))
-            if(objIds.indexOf(user._id) > -1){
+            if(objIds.indexOf(user._id.toString()) > -1){
                 user.following =true;
             }
             return user;
@@ -101,9 +99,7 @@ exports.queryFolowers = async(ctx,next)=>{
 
     result.map((user)=>user.following=false);
 
-    let targetIds = result.map(user=>"'"+user._id+"'");
-    // let targetIds = result.map(user=>String(user._id));
-    console.log('targetIds ***',targetIds)
+    let targetIds = result.map(user=>`'${user._id.toString()}'`);//objectId => string
     
     // let checksql = `select fol_user_id from follow_relation where user_id =?  and fol_user_id in (?)`;
     //检查登录状态
@@ -111,13 +107,13 @@ exports.queryFolowers = async(ctx,next)=>{
     if(loginStatus.status && targetIds.length > 0){
         let session = await redisClient.hgetallAsync(tokenId);
         let checksql = `select fol_user_id from follow_relation where user_id ='${session.userId}'  and fol_user_id in (${targetIds.join(',')})`;
-        console.log('checksql ***',checksql)
+ 
         let checkResp = await mysqlQuery(checksql);
-        // let checkResp = await mysqlQuery(checksql,[session.userId,[targetIds]]);
-        let objIds = checkResp.map(item=>item.fol_user_id);
-        console.log('objIds ***',objIds)
+        // let checkResp = await mysqlQuery(checksql,[session.userId,[targetIds.join(',')]]);
+        let objIds = checkResp.map(item=>item.fol_user_id.toString());
+    
         result.map((user)=>{
-            if(objIds.indexOf(user._id) > -1){
+            if(objIds.indexOf(user._id.toString()) > -1){
                 user.following =true;
             }
             return user;
