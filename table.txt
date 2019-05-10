@@ -4,3 +4,12 @@ CREATE table if not exists follow_relation (
     fol_user_id VARCHAR(500)
 
 )ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+
+db.createCollection('banners')   
+   
+db.banners.insert({articleId:'5cb984cb710def051a1c63de',cover:'http://localhost:3001/public/upload/1524623882717.jpg'})
+   
+   
+db.banners.insert({articleId:'5cb6e3e9f16e3c080322f385',cover:'http://localhost:3001/public/upload/2.jpg'})
