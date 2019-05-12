@@ -67,13 +67,22 @@ exports.likeArticle=async (ctx,next)=>{
         await next();
         return;
     }else{
+        let tokenId = ctx.cookies.get('tokenId');
+        let session = await redisClient.hgetallAsync(tokenId);
         let client  = await MongoClient.connect(mongodurl,{useNewUrlParser: true });
         let dbase = client.db('koa');
-        await dbase.collection('article').updateOne({_id:ObjectID(articleId)},{$inc:{like:1}})
+        await dbase.collection('article').updateOne({_id:ObjectID(articleId)},{$inc:{like:1},$push:{likes:session.userId}})
     
         ctx.body={status:200,success:true,errMsg:''}
     }
     await next();
+}
+
+
+//检查用户是否
+exports.checkCanLike =async(ctx,next)=>{
+
+
 }
 
 
