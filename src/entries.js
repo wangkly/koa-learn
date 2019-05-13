@@ -1,6 +1,6 @@
 import { registHandler,loginHandler,checkIfLogin,checkUserOperateRight,logoutHandler,createSvgCaptchaCode} from './controllers/login-regist-controller';
 import {saveArticle,getArticles,getBanners,getArticleById,
-    saveComments,getComments,likeComment,dislikeComment,getUserArticles,likeArticle} from './controllers/article-controller';
+    saveComments,getComments,likeComment,dislikeComment,getUserArticles,likeArticle,checkLikeAndFavo,addFavorite} from './controllers/article-controller';
 import {uploadFile} from './controllers/file-controller';
 import {getUserInfo,setUserHeadImg,updateUserInfo,queryFollows,queryFolowers,countFollow} from './controllers/user-controller';
 import {followTargetUser,unfollow,checkFollowed} from './controllers/follow-controller';
@@ -96,6 +96,16 @@ var entries = [
         method:'POST',
         handler:likeArticle
 
+    },
+    {
+        url:'/add-favo',
+        method:'POST',
+        handler:addFavorite
+    },
+    {
+        url:'/like-favo',
+        method:'POST',
+        handler:checkLikeAndFavo
     },
     {
         url:'/saveComments',

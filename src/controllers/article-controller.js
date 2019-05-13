@@ -58,6 +58,40 @@ exports.getBanners =async(ctx,next)=>{
 }
 
 
+//将文章添加收藏
+exports.addFavorite =async(ctx,next)=>{
+    let {articleId} = ctx.request.body; 
+    //检查登录状态
+    let result = await loginstatuscheck(ctx);
+    if(!result.status){
+        ctx.body={status:200,success:false,errMsg:'请先登录'};
+        await next();
+        return;
+    }else{
+        let tokenId = ctx.cookies.get('tokenId');
+        let session = await redisClient.hgetallAsync(tokenId);
+        let client  = await MongoClient.connect(mongodurl,{useNewUrlParser: true });
+        let dbase = client.db('koa');
+        let userData = await dbase.collection('favorite').findOne({userId:session.userId});
+        if(userData){
+            let articles = userData.articles||[];
+            if(articles.indexOf(articleId) > -1 ){
+                ctx.body={status:200,success:false,errMsg:'你已收藏过了'};
+            }else{
+                await dbase.collection('favorite').updateOne({userId:session.userId},{$push:{articles:articleId}});
+                ctx.body={status:200,success:true,errMsg:''};
+            }
+        }else{
+            await dbase.collection('favorite').insertOne({userId:session.userId,articles:[articleId]});
+            ctx.body={status:200,success:true,errMsg:''};
+        }
+
+        await next();
+        return;
+    }
+
+}
+
 exports.likeArticle=async (ctx,next)=>{
     let {articleId} = ctx.request.body; 
     //检查登录状态
@@ -71,6 +105,15 @@ exports.likeArticle=async (ctx,next)=>{
         let session = await redisClient.hgetallAsync(tokenId);
         let client  = await MongoClient.connect(mongodurl,{useNewUrlParser: true });
         let dbase = client.db('koa');
+        //检查是否已经点过赞
+        let article = await dbase.collection('article').findOne({_id:ObjectID(articleId)});
+        let likes =  article.likes||[];
+        if(likes.indexOf(session.userId) > -1){
+            ctx.body={status:200,success:false,errMsg:'你已经赞过了'};
+            await next();
+            return;
+        }
+
         await dbase.collection('article').updateOne({_id:ObjectID(articleId)},{$inc:{like:1},$push:{likes:session.userId}})
     
         ctx.body={status:200,success:true,errMsg:''}
@@ -79,10 +122,44 @@ exports.likeArticle=async (ctx,next)=>{
 }
 
 
-//检查用户是否
-exports.checkCanLike =async(ctx,next)=>{
+//检查用户是否点赞、收藏
+exports.checkLikeAndFavo =async(ctx,next)=>{
+    let {articleId} = ctx.request.body; 
+    let data={
+        like:false,
+        favorite:false
+    }
+     //检查登录状态
+    let result = await loginstatuscheck(ctx);
+    if(!result.status){
+        ctx.body={status:200,success:false,errMsg:'未登录',data:data};
+        await next();
+        return;
+    }else{
+        let tokenId = ctx.cookies.get('tokenId');
+        let session = await redisClient.hgetallAsync(tokenId);
+        let client  = await MongoClient.connect(mongodurl,{useNewUrlParser: true });
+        let dbase = client.db('koa');
 
+        //检查是否已经点过赞
+        let article = await dbase.collection('article').findOne({_id:ObjectID(articleId)});
+        let likes =  article.likes||[];
+        if(likes.indexOf(session.userId) > -1){
+            data.like =true;
+        }
 
+        //检查是否已经收藏
+        let userData = await dbase.collection('favorite').findOne({userId:session.userId});
+        if(userData){
+            let articles = userData.articles||[];
+            if(articles.indexOf(articleId) > -1){
+                data.favorite =true;
+            }
+        }
+    }
+
+    ctx.body={status:200,success:true,errMsg:'',data:data};
+    await next();
 }
 
 
