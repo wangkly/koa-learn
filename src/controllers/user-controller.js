@@ -176,3 +176,28 @@ exports.setUserHeadImg = async(ctx,next)=>{
 
     await next();
 }
+
+/**
+ * 查询用户的收藏
+ */
+exports.queryUserFavorite = async(ctx,next)=>{
+    let data=[];
+    let total = 0;
+    let tokenId = ctx.cookies.get('tokenId');
+    let {pageNo,pageSize,userId} = ctx.request.body;
+    let result = await checkIfUserCanOperate(tokenId,userId);
+    if(result.status){
+     let client = await  MongoClient.connect(mongodurl,{useNewUrlParser:true});
+     let dbase = client.db("koa");
+     let userData = await dbase.collection('favorite').findOne({userId:userId});
+     let articles = userData.articles||[];
+     let page = articles.slice((pageNo-1)*pageSize,pageNo*pageSize)
+     let ids = page.map(id=>ObjectID(id));
+     total = ids.length||0;
+     data = await dbase.collection('article').find({'_id':{$in:ids}}).project({content:0}).toArray();
+    }
+
+    ctx.body={status:200,success:true,errMsg:'',data:{data,total}}
+    await next();
+
+}

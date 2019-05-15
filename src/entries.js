@@ -2,7 +2,7 @@ import { registHandler,loginHandler,checkIfLogin,checkUserOperateRight,logoutHan
 import {saveArticle,getArticles,getBanners,getArticleById,
     saveComments,getComments,likeComment,dislikeComment,getUserArticles,likeArticle,checkLikeAndFavo,addFavorite} from './controllers/article-controller';
 import {uploadFile} from './controllers/file-controller';
-import {getUserInfo,setUserHeadImg,updateUserInfo,queryFollows,queryFolowers,countFollow} from './controllers/user-controller';
+import {getUserInfo,setUserHeadImg,updateUserInfo,queryFollows,queryFolowers,countFollow,queryUserFavorite} from './controllers/user-controller';
 import {followTargetUser,unfollow,checkFollowed} from './controllers/follow-controller';
 var entries = [
     {
@@ -101,6 +101,11 @@ var entries = [
         url:'/add-favo',
         method:'POST',
         handler:addFavorite
+    },
+    {
+        url:'/query-favo',
+        method:'POST',
+        handler:queryUserFavorite
     },
     {
         url:'/like-favo',

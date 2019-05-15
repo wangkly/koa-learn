@@ -186,10 +186,11 @@ exports.getUserArticles = async(ctx,next)=>{
     let {pageNo,pageSize,userId} = postData; 
     let client  = await MongoClient.connect(mongodurl,{useNewUrlParser: true });
     let dbase = client.db('koa');
-    let articles = await dbase.collection('article').find({userId}).project({content:0}).skip(pageNo*pageSize).limit(pageSize).toArray();
+    let total = await dbase.collection('article').count({userId});
+    let articles = await dbase.collection('article').find({userId}).project({content:0}).skip((pageNo-1)*pageSize).limit(pageSize).toArray();
     ctx.body={
         status:200,success:true,errMsg:'',
-        data: articles
+        data: {articles,total}
     }
 
    await next();
