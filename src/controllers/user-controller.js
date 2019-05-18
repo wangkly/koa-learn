@@ -17,7 +17,7 @@ exports.getUserInfo = async (ctx,next)=>{
     let userInfo = await dbase.collection('user').findOne({'_id':ObjectID(userId)},{projection:{password:0}});
     
     ctx.body={status:200,success:true,errMsg:'',data:userInfo}
-
+    client.close();
    await next();
 
 }
@@ -74,7 +74,7 @@ exports.queryFollows = async(ctx,next)=>{
         })
 
     }
-
+    client.close();
     ctx.body={status:200,success:true,errMsg:'',data:{result,total}}
     await next();
 }
@@ -120,7 +120,7 @@ exports.queryFolowers = async(ctx,next)=>{
         })
 
     }
-
+    client.close();
     ctx.body={status:200,success:true,errMsg:'',data:{result,total}}
     await next();
 }
@@ -141,7 +141,7 @@ exports.updateUserInfo = async(ctx,next)=>{
         let resp = await dbase.collection('user').updateOne({_id:ObjectID(userId)},{$set:{nickName,desc,gender}});
         
         ctx.body={status:200,success:true,errMsg:''}
-
+        client.close();
 
     }else{
         ctx.body={status:200,success:false,errMsg:'非用户本人不可操作'}
@@ -173,7 +173,7 @@ exports.setUserHeadImg = async(ctx,next)=>{
     redisClient.hmset(tokenId,['headImg',headImg])
     
     ctx.body={status:200,success:true,errMsg:''}
-
+    client.close();
     await next();
 }
 
@@ -195,6 +195,7 @@ exports.queryUserFavorite = async(ctx,next)=>{
      let ids = page.map(id=>ObjectID(id));
      total = ids.length||0;
      data = await dbase.collection('article').find({'_id':{$in:ids}}).project({content:0}).toArray();
+     client.close();
     }
 
     ctx.body={status:200,success:true,errMsg:'',data:{data,total}}

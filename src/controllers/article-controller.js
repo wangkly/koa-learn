@@ -54,6 +54,7 @@ exports.getBanners =async(ctx,next)=>{
     let dbase = client.db('koa');
     let banners = await dbase.collection('banners').find({}).toArray();
     ctx.body={status:200,success:true,errMsg:'',data:banners};
+    client.close();
     await next();
 }
 
@@ -85,7 +86,7 @@ exports.addFavorite =async(ctx,next)=>{
             await dbase.collection('favorite').insertOne({userId:session.userId,articles:[articleId]});
             ctx.body={status:200,success:true,errMsg:''};
         }
-
+        client.close();
         await next();
         return;
     }
@@ -117,6 +118,7 @@ exports.likeArticle=async (ctx,next)=>{
         await dbase.collection('article').updateOne({_id:ObjectID(articleId)},{$inc:{like:1},$push:{likes:session.userId}})
     
         ctx.body={status:200,success:true,errMsg:''}
+        client.close();
     }
     await next();
 }
@@ -156,6 +158,7 @@ exports.checkLikeAndFavo =async(ctx,next)=>{
                 data.favorite =true;
             }
         }
+        client.close();
     }
 
     ctx.body={status:200,success:true,errMsg:'',data:data};
@@ -173,7 +176,7 @@ exports.getArticles = async(ctx,next)=>{
         status:200,success:true,errMsg:'',
         data: articles
     }
-
+    client.close();
    await next();
 
 }
@@ -192,7 +195,7 @@ exports.getUserArticles = async(ctx,next)=>{
         status:200,success:true,errMsg:'',
         data: {articles,total}
     }
-
+    client.close();
    await next();
 }
 
@@ -207,7 +210,8 @@ exports.getArticleById = async (ctx,next)=>{
         status:200,success:true,errMsg:'',
         data: article
     }
-    next();
+    client.close(); 
+    await next();
 }
 
 
@@ -294,7 +298,7 @@ exports.saveComments = async (ctx,next)=>{
 
         
     }
-
+    client.close();
     await next();
 }
 
@@ -307,7 +311,7 @@ exports.getComments =async (ctx,next)=>{
 
     let comments = await dbase.collection('comments').find({'article_id':id}).toArray();
     ctx.body={status:200,success:true,errMsg:'',data:comments}
-
+    client.close();
     await next();
 
 }
@@ -333,6 +337,7 @@ exports.likeComment = async (ctx,next)=>{
         await  dbase.collection('comments').updateOne({_id:ObjectID(id)},{$inc:{like:1}})
     }
     ctx.body={status:200,success:true,errMsg:''}
+    client.close();
     await next();
 }
 
@@ -358,5 +363,6 @@ exports.dislikeComment = async (ctx,next)=>{
         await  dbase.collection('comments').updateOne({_id:ObjectID(id)},{$inc:{dislike:1}})
     }
     ctx.body={status:200,success:true,errMsg:''}
+    client.close();
     await next();
 }
