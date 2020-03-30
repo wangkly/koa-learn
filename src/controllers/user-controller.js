@@ -1,7 +1,4 @@
-var MongoClient = require('mongodb').MongoClient;
 var ObjectID = require('mongodb').ObjectID;
-
-var mongodurl = "mongodb://localhost:27017/";
 
 import {checkIfUserCanOperate,loginstatuscheck} from './user-check-controller';
 
@@ -11,7 +8,7 @@ import {mysqlConn,mysqlQuery} from '../mysql-util';
 exports.getUserInfo = async (ctx,next)=>{
     let {userId}= ctx.request.body;
 
-    let client = await MongoClient.connect(mongodurl,{useNewUrlParser: true });
+    let client = ctx.mongoClient;
     let dbase = client.db('koa');
     //注意和 dbase.collection('user').find({'_id':ObjectID(userId)}).project({password:0}).toArray(); 差别
     let userInfo = await dbase.collection('user').findOne({'_id':ObjectID(userId)},{projection:{password:0}});
@@ -49,7 +46,7 @@ exports.queryFollows = async(ctx,next)=>{
     let resp = await mysqlQuery(sql,[userId,(pageNo-1)*pageSize,pageSize]);
     let ids = resp.map((v,k)=>ObjectID(v.fol_user_id));
 
-    let client = await MongoClient.connect(mongodurl,{useNewUrlParser: true });
+    let client = ctx.mongoClient;
     let dbase = client.db('koa');
 
     let result = await dbase.collection('user').find({'_id':{$in:ids}}).project({password:0}).toArray();
@@ -92,7 +89,7 @@ exports.queryFolowers = async(ctx,next)=>{
     let resp = await mysqlQuery(sql,[userId,(pageNo-1)*pageSize,pageSize]);
     let ids = resp.map((v,k)=>ObjectID(v.user_id));
 
-    let client = await MongoClient.connect(mongodurl,{useNewUrlParser: true });
+    let client = ctx.mongoClient;
     let dbase = client.db('koa');
 
     let result = await dbase.collection('user').find({'_id':{$in:ids}}).project({password:0}).toArray();
@@ -136,7 +133,7 @@ exports.updateUserInfo = async(ctx,next)=>{
 
     if(result && result.status){
 
-        let client = await MongoClient.connect(mongodurl,{useNewUrlParser:true});
+        let client = ctx.mongoClient;
         let dbase = client.db('koa');
         let resp = await dbase.collection('user').updateOne({_id:ObjectID(userId)},{$set:{nickName,desc,gender}});
         
@@ -166,7 +163,7 @@ exports.setUserHeadImg = async(ctx,next)=>{
         return;
     }
 
-    let client = await MongoClient.connect(mongodurl,{useNewUrlParser:true});
+    let client = ctx.mongoClient;
     let dbase = client.db('koa');
     let resp =  await dbase.collection('user').findOneAndUpdate({'_id':ObjectID(userId)},{$set:{ headImg:headImg}});
 
@@ -187,7 +184,7 @@ exports.queryUserFavorite = async(ctx,next)=>{
     let {pageNo,pageSize,userId} = ctx.request.body;
     let result = await checkIfUserCanOperate(tokenId,userId);
     if(result.status){
-     let client = await  MongoClient.connect(mongodurl,{useNewUrlParser:true});
+     let client = ctx.mongoClient;
      let dbase = client.db("koa");
      let userData = await dbase.collection('favorite').findOne({userId:userId});
      let articles = userData.articles||[];

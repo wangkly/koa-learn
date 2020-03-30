@@ -1,5 +1,4 @@
-var MongoClient = require('mongodb').MongoClient;
-var mongodurl = "mongodb://localhost:27017/";
+
 var svgCaptcha = require('svg-captcha');
 const uuidv1 = require('uuid/v1');
 
@@ -23,7 +22,7 @@ exports.registHandler = async (ctx,next)=>{
         return;
     }
 
-    let client = await MongoClient.connect(mongodurl,{ useNewUrlParser: true })
+    let client = ctx.mongoClient;
     var dbase = client.db("koa");
     let resp  = await dbase.collection('user').find({'account':email}).toArray();
     
@@ -44,7 +43,7 @@ exports.registHandler = async (ctx,next)=>{
 exports.loginHandler= async (ctx,next)=>{
     let postData =ctx.request.body;
     let {account,password} = postData;
-    let client = await MongoClient.connect(mongodurl,{ useNewUrlParser: true })
+    let client = ctx.mongoClient;
     var dbase = client.db("koa");
     let resp  = await dbase.collection('user').findOne({'account':account});
 

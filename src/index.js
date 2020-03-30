@@ -3,6 +3,7 @@ var Koa = require('koa');
 const koaStatic = require('koa-static');
 const koaBody = require('koa-body');
 const bodyParser = require('koa-bodyparser');
+import { getMongoClient } from './mongod-util';
 
 import redisClient from './redis-util';
 
@@ -27,6 +28,12 @@ app.use(async (ctx, next)=> {
       await next();
     }
   });
+
+  app.use(async(ctx,next)=>{
+    app.context.mongoClient = await getMongoClient();
+    app.context.redisClient = redisClient;
+    await next();
+  })
 
   app.use(koaStatic(__dirname ,'public'))
 

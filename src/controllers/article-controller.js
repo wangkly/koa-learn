@@ -1,9 +1,6 @@
-var MongoClient = require('mongodb').MongoClient;
 var ObjectID = require('mongodb').ObjectID;
 
 const uuidv1 = require('uuid/v1');
-
-var mongodurl = "mongodb://localhost:27017/";
 
 import redisClient from '../redis-util';
 import {loginstatuscheck} from './user-check-controller';
@@ -13,7 +10,7 @@ exports.saveArticle = async (ctx,next)=>{
     let tokenId = ctx.cookies.get('tokenId');
     let postData = ctx.request.body;
     let {title,content,cover,desc} = postData;
-    let client  = await MongoClient.connect(mongodurl,{useNewUrlParser: true });
+    let client  = ctx.mongoClient;;
     let dbase = client.db('koa');
     let session = await redisClient.hgetallAsync(tokenId);
     //检查登录状态
@@ -50,7 +47,7 @@ exports.saveArticle = async (ctx,next)=>{
 
 //获取首页banners
 exports.getBanners =async(ctx,next)=>{
-    let client = await MongoClient.connect(mongodurl,{useNewUrlParser:true});
+    let client = ctx.mongoClient;;
     let dbase = client.db('koa');
     let banners = await dbase.collection('banners').find({}).toArray();
     ctx.body={status:200,success:true,errMsg:'',data:banners};
@@ -71,7 +68,7 @@ exports.addFavorite =async(ctx,next)=>{
     }else{
         let tokenId = ctx.cookies.get('tokenId');
         let session = await redisClient.hgetallAsync(tokenId);
-        let client  = await MongoClient.connect(mongodurl,{useNewUrlParser: true });
+        let client  = ctx.mongoClient;
         let dbase = client.db('koa');
         let userData = await dbase.collection('favorite').findOne({userId:session.userId});
         if(userData){
@@ -104,7 +101,7 @@ exports.likeArticle=async (ctx,next)=>{
     }else{
         let tokenId = ctx.cookies.get('tokenId');
         let session = await redisClient.hgetallAsync(tokenId);
-        let client  = await MongoClient.connect(mongodurl,{useNewUrlParser: true });
+        let client  = ctx.mongoClient;
         let dbase = client.db('koa');
         //检查是否已经点过赞
         let article = await dbase.collection('article').findOne({_id:ObjectID(articleId)});
@@ -140,7 +137,7 @@ exports.checkLikeAndFavo =async(ctx,next)=>{
     }else{
         let tokenId = ctx.cookies.get('tokenId');
         let session = await redisClient.hgetallAsync(tokenId);
-        let client  = await MongoClient.connect(mongodurl,{useNewUrlParser: true });
+        let client  = ctx.mongoClient;
         let dbase = client.db('koa');
 
         //检查是否已经点过赞
@@ -169,7 +166,7 @@ exports.checkLikeAndFavo =async(ctx,next)=>{
 exports.getArticles = async(ctx,next)=>{
     let postData = ctx.request.body;
     let {pageNo,pageSize} = postData; 
-    let client  = await MongoClient.connect(mongodurl,{useNewUrlParser: true });
+    let client  = ctx.mongoClient;
     let dbase = client.db('koa');
     let articles = await dbase.collection('article').find({}).project({content:0}).sort({addtime:-1}).skip(pageNo*pageSize).limit(pageSize).toArray();
     ctx.body={
@@ -187,7 +184,7 @@ exports.getArticles = async(ctx,next)=>{
 exports.getUserArticles = async(ctx,next)=>{
     let postData = ctx.request.body;
     let {pageNo,pageSize,userId} = postData; 
-    let client  = await MongoClient.connect(mongodurl,{useNewUrlParser: true });
+    let client  = ctx.mongoClient;
     let dbase = client.db('koa');
     let total = await dbase.collection('article').count({userId});
     let articles = await dbase.collection('article').find({userId}).project({content:0}).skip((pageNo-1)*pageSize).limit(pageSize).toArray();
@@ -203,7 +200,7 @@ exports.getUserArticles = async(ctx,next)=>{
 exports.getArticleById = async (ctx,next)=>{
     let postData = ctx.request.body;
     let {id} = postData;
-    let client  = await MongoClient.connect(mongodurl,{useNewUrlParser: true });
+    let client  = ctx.mongoClient;
     let dbase = client.db('koa');
     let article = await dbase.collection('article').findOne({'_id':ObjectID(id) });
     ctx.body={
@@ -233,7 +230,7 @@ exports.saveComments = async (ctx,next)=>{
         //repliRef_id 针对某条评论做回复，该评论的id
         let {article_id,content,repliRef_id} = postData;
         let {userId,account,headImg} = session;
-        let client  = await MongoClient.connect(mongodurl,{useNewUrlParser: true });
+        let client  = ctx.mongoClient;
         let dbase = client.db('koa');
         if(repliRef_id){//针对某条评论的回复 不允许针对评论的评论再评论
             //先找到这条评论
@@ -295,18 +292,16 @@ exports.saveComments = async (ctx,next)=>{
                 ctx.body={status:200,success:true,errMsg:''}
             }
         }
-
-        
+        client.close();
+        await next();
     }
-    client.close();
-    await next();
 }
 
 
 
 exports.getComments =async (ctx,next)=>{
     let {id} = ctx.request.body;
-    let client = await MongoClient.connect(mongodurl,{useNewUrlParser: true });
+    let client = ctx.mongoClient;
     let dbase = client.db('koa');
 
     let comments = await dbase.collection('comments').find({'article_id':id}).toArray();
@@ -328,7 +323,7 @@ exports.likeComment = async (ctx,next)=>{
         return;
     }
 
-    let client = await MongoClient.connect(mongodurl,{useNewUrlParser: true });
+    let client = ctx.mongoClient;
     let dbase = client.db('koa');
 
     if(repliRef_id){//针对回复的回复
@@ -354,7 +349,7 @@ exports.dislikeComment = async (ctx,next)=>{
         return;
     }
 
-    let client = await MongoClient.connect(mongodurl,{useNewUrlParser: true });
+    let client = ctx.mongoClient;
     let dbase = client.db('koa');
 
     if(repliRef_id){//针对回复的回复

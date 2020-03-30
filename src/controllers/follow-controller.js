@@ -1,8 +1,5 @@
-var MongoClient = require('mongodb').MongoClient;
 var ObjectID = require('mongodb').ObjectID;
 const uuidv1 = require('uuid/v1');
-
-var mongodurl = "mongodb://localhost:27017/";
 
 import redisClient from '../redis-util';
 import {mysqlConn}  from '../mysql-util';
