@@ -2,7 +2,6 @@ var ObjectID = require('mongodb').ObjectID;
 
 const uuidv1 = require('uuid/v1');
 
-import redisClient from '../redis-util';
 import {loginstatuscheck} from './user-check-controller';
 
 
@@ -12,7 +11,7 @@ exports.saveArticle = async (ctx,next)=>{
     let {title,content,cover,desc} = postData;
     let client  = ctx.mongoClient;;
     let dbase = client.db('koa');
-    let session = await redisClient.hgetallAsync(tokenId);
+    let session = await ctx.redisClient.hgetallAsync(tokenId);
     //检查登录状态
     let result = await loginstatuscheck(ctx);
     if(!result.status){
@@ -67,7 +66,7 @@ exports.addFavorite =async(ctx,next)=>{
         return;
     }else{
         let tokenId = ctx.cookies.get('tokenId');
-        let session = await redisClient.hgetallAsync(tokenId);
+        let session = await ctx.redisClient.hgetallAsync(tokenId);
         let client  = ctx.mongoClient;
         let dbase = client.db('koa');
         let userData = await dbase.collection('favorite').findOne({userId:session.userId});
@@ -100,7 +99,7 @@ exports.likeArticle=async (ctx,next)=>{
         return;
     }else{
         let tokenId = ctx.cookies.get('tokenId');
-        let session = await redisClient.hgetallAsync(tokenId);
+        let session = await ctx.redisClient.hgetallAsync(tokenId);
         let client  = ctx.mongoClient;
         let dbase = client.db('koa');
         //检查是否已经点过赞
@@ -136,7 +135,7 @@ exports.checkLikeAndFavo =async(ctx,next)=>{
         return;
     }else{
         let tokenId = ctx.cookies.get('tokenId');
-        let session = await redisClient.hgetallAsync(tokenId);
+        let session = await ctx.redisClient.hgetallAsync(tokenId);
         let client  = ctx.mongoClient;
         let dbase = client.db('koa');
 
@@ -216,7 +215,7 @@ exports.getArticleById = async (ctx,next)=>{
 
 exports.saveComments = async (ctx,next)=>{
     let tokenId = ctx.cookies.get('tokenId');
-    let session = await redisClient.hgetallAsync(tokenId);
+    let session = await ctx.redisClient.hgetallAsync(tokenId);
 
     //检查登录状态
     let result = await loginstatuscheck(ctx);

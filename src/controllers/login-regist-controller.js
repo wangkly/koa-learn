@@ -2,8 +2,6 @@
 var svgCaptcha = require('svg-captcha');
 const uuidv1 = require('uuid/v1');
 
-import redisClient from '../redis-util';
-
 import {loginstatuscheck,checkIfUserCanOperate} from './user-check-controller';
 
 import {EXPIRES,md5} from '../util';    
@@ -14,7 +12,7 @@ exports.registHandler = async (ctx,next)=>{
 
     let key = ctx.cookies.get('regist-vc-key');
 
-    let serverVcode = await redisClient.hgetAsync('regist',key);
+    let serverVcode = await ctx.redisClient.hgetAsync('regist',key);
     
     if(vcode != serverVcode.toLowerCase()){
         ctx.body={status:200,success:false,errMsg:'验证码填写错误'};
@@ -64,7 +62,7 @@ exports.loginHandler= async (ctx,next)=>{
             };
 
             let tokenId = session_id;
-            redisClient.hmset(tokenId,session)
+            ctx.redisClient.hmset(tokenId,session)
             //将用户信息保存到session,设置cookies;
             ctx.cookies.set('tokenId', tokenId)
 
@@ -82,7 +80,7 @@ exports.loginHandler= async (ctx,next)=>{
 exports.logoutHandler =async(ctx,next)=>{
     let tokenId = ctx.cookies.get('tokenId');
     ctx.cookies.set('tokenId', '')
-    redisClient.del(tokenId);
+    ctx.redisClient.del(tokenId);
     ctx.body={status:200,success:true,errMsg:''};
     await next();
 }
@@ -109,7 +107,7 @@ exports.createSvgCaptchaCode = async(ctx,next)=>{
     }
 
     //存到redis
-    redisClient.hmset(queryObj.page,[key,captcha.text]);
+    ctx.redisClient.hmset(queryObj.page,[key,captcha.text]);
     ctx.cookies.set('regist-vc-key', key);
     
     ctx.set('Content-Type', 'image/svg+xml');
@@ -128,12 +126,12 @@ exports.checkIfLogin = async(ctx,next)=>{
     let result = await loginstatuscheck(ctx);
     
     if(result && result.status){
-        let session = await redisClient.hgetallAsync(tokenId);
+        let session = await ctx.redisClient.hgetallAsync(tokenId);
         ctx.body={status:200,success:true,errMsg:'',data:session};
 
     }else{
         ctx.cookies.set('tokenId', '')
-        tokenId && redisClient.del(tokenId);
+        tokenId && ctx.redisClient.del(tokenId);
         ctx.body={status:200,success:false,errMsg:result.msg}
 
     }

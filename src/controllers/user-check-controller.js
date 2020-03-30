@@ -1,6 +1,4 @@
 
-import redisClient from '../redis-util';
-
 /**
  * 检查当前用户是否登录
  * cookies中是否有tokenId,
@@ -13,7 +11,7 @@ exports.loginstatuscheck= async(ctx)=>{
       }
     let tokenId = ctx.cookies.get('tokenId');
     if(tokenId){
-        let session = await redisClient.hgetallAsync(tokenId);
+        let session = await ctx.redisClient.hgetallAsync(tokenId);
         if(session){
             if(session.expire > (new Date()).getTime()){//登录且未过期
                 result.status=true;
@@ -33,7 +31,7 @@ exports.loginstatuscheck= async(ctx)=>{
 exports.checkIfUserCanOperate = async (tokenId,userId)=>{
     let result ={status:false,msg:'非法操作'}
     if(tokenId){
-        let session = await redisClient.hgetallAsync(tokenId);
+        let session = await ctx.redisClient.hgetallAsync(tokenId);
         if(session.expire > (new Date()).getTime()){
             if(session.userId == userId){
                 result.status=true;

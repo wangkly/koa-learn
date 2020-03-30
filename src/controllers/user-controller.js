@@ -2,7 +2,6 @@ var ObjectID = require('mongodb').ObjectID;
 
 import {checkIfUserCanOperate,loginstatuscheck} from './user-check-controller';
 
-import redisClient from '../redis-util';
 import {mysqlConn,mysqlQuery} from '../mysql-util';
 
 exports.getUserInfo = async (ctx,next)=>{
@@ -59,7 +58,7 @@ exports.queryFollows = async(ctx,next)=>{
     //检查登录状态
     let loginStatus = await loginstatuscheck(ctx);
     if(loginStatus.status && targetIds.length > 0){
-        let session = await redisClient.hgetallAsync(tokenId);
+        let session = await ctx.redisClient.hgetallAsync(tokenId);
         let checksql = `select fol_user_id from follow_relation where user_id ='${session.userId}'  and fol_user_id in (${targetIds.join(',')})`;
         let checkResp = await mysqlQuery(checksql);
         let objIds = checkResp.map(item=>item.fol_user_id.toString());
@@ -102,7 +101,7 @@ exports.queryFolowers = async(ctx,next)=>{
     //检查登录状态
     let loginStatus = await loginstatuscheck(ctx);
     if(loginStatus.status && targetIds.length > 0){
-        let session = await redisClient.hgetallAsync(tokenId);
+        let session = await ctx.redisClient.hgetallAsync(tokenId);
         let checksql = `select fol_user_id from follow_relation where user_id ='${session.userId}'  and fol_user_id in (${targetIds.join(',')})`;
  
         let checkResp = await mysqlQuery(checksql);
@@ -167,7 +166,7 @@ exports.setUserHeadImg = async(ctx,next)=>{
     let dbase = client.db('koa');
     let resp =  await dbase.collection('user').findOneAndUpdate({'_id':ObjectID(userId)},{$set:{ headImg:headImg}});
 
-    redisClient.hmset(tokenId,['headImg',headImg])
+    ctx.redisClient.hmset(tokenId,['headImg',headImg])
     
     ctx.body={status:200,success:true,errMsg:''}
     client.close();

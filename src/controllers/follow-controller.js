@@ -1,7 +1,6 @@
 var ObjectID = require('mongodb').ObjectID;
 const uuidv1 = require('uuid/v1');
 
-import redisClient from '../redis-util';
 import {mysqlConn}  from '../mysql-util';
 
 import {loginstatuscheck} from './user-check-controller';
@@ -15,7 +14,7 @@ exports.followTargetUser = async(ctx,next)=>{
     if(!result.status){
         ctx.body={status:200,success:false,errMsg:result.msg}
     }else{
-        let session = await redisClient.hgetallAsync(tokenId);
+        let session = await ctx.redisClient.hgetallAsync(tokenId);
         let sql = 'insert into follow_relation (user_id,fol_user_id) values (?,?)'
         let addParams=[session.userId,folUserId]
 
@@ -50,7 +49,7 @@ exports.unfollow = async(ctx,next)=>{
     if(!result.status){
         ctx.body={status:200,success:false,errMsg:result.msg}
     }else{
-        let session = await redisClient.hgetallAsync(tokenId);
+        let session = await ctx.redisClient.hgetallAsync(tokenId);
         let sql = 'delete from follow_relation where user_id =? and fol_user_id =?'
         let addParams=[session.userId,folUserId]
 
@@ -80,7 +79,7 @@ exports.checkFollowed = async (ctx,next)=>{
     if(!result.status){
         ctx.body={status:200,success:false,errMsg:result.msg}
     }else{
-        let session = await redisClient.hgetallAsync(tokenId);
+        let session = await ctx.redisClient.hgetallAsync(tokenId);
         let sql = 'select * from follow_relation where user_id =? and fol_user_id=?';
         let addParams=[session.userId,folUserId];
         let resp = await new Promise((resolve,reject)=>{
